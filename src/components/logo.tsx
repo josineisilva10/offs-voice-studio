@@ -12,7 +12,7 @@ export function Logo({ className }: { className?: string }) {
       <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <Waves className="size-5" />
       </div>
-      <span className="font-headline text-sidebar-foreground">VozGenius</span>
+      <span className="font-headline text-sidebar-foreground">OffsVoiceStudio</span>
     </div>
   );
 }

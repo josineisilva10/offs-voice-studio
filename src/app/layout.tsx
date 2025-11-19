@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Settings, LogOut } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'VozGenius',
+  title: 'OffsVoiceStudio',
   description: 'Sua plataforma de gravação e geração de voz com IA.',
 };
 

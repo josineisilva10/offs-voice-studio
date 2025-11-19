@@ -506,7 +506,7 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
                   <div className="w-full space-y-4">
                     <audio ref={audioRef} src={audioDataUri} className="w-full" controls/>
                     <div className="flex gap-2">
-                        <a href={audioDataUri} download={`${form.getValues('recordingName') || 'vozgenius'}-${Date.now()}.wav`}>
+                        <a href={audioDataUri} download={`${form.getValues('recordingName') || 'offsvoicestudio'}-${Date.now()}.wav`}>
                             <Button variant="outline">
                                 <Download className="mr-2 h-4 w-4" />
                                 Baixar Áudio
@@ -538,3 +538,5 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
     </Form>
   );
 }
+
+    
