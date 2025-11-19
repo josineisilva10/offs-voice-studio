@@ -3,17 +3,18 @@ export type Voice = {
   name: string;
   gender: 'Masculino' | 'Feminino';
   description: string;
-  sampleText: string;
+  sampleAudioUrl: string; // Changed from sampleText
+  profilePictureUrl: string; // Added field
 };
 
 export const voices: Voice[] = [
-  { id: 'Algenib', name: 'Algenib', gender: 'Feminino', description: 'Voz feminina, clara e profissional.', sampleText: 'Olá, eu sou Algenib. Posso transformar seu texto em áudio com clareza e profissionalismo.' },
-  { id: 'Antares', name: 'Antares', gender: 'Masculino', description: 'Voz masculina, grave e confiante.', sampleText: 'Saudações, sou Antares. Use minha voz para dar um tom de autoridade às suas gravações.' },
-  { id: 'Arcturus', name: 'Arcturus', gender: 'Masculino', description: 'Voz masculina, amigável e energética.', sampleText: 'E aí, aqui é Arcturus! Pronto para dar vida e energia ao seu conteúdo.' },
-  { id: 'Rigel', name: 'Rigel', gender: 'Masculino', description: 'Voz masculina, calma e narrativa.', sampleText: 'Eu sou Rigel. Ideal para narrações e histórias que precisam de um toque sereno.' },
-  { id: 'Spica', name: 'Spica', gender: 'Feminino', description: 'Voz feminina, jovem e dinâmica.', sampleText: 'Oi, eu sou a Spica! Minha voz é perfeita para projetos modernos e dinâmicos.' },
-  { id: 'Vega', name: 'Vega', gender: 'Feminino', description: 'Voz feminina, madura e sofisticada.', sampleText: 'Meu nome é Vega. Empresto minha sofisticação para locuções que exigem elegância.' },
-  { id: 'Sirius', name: 'Sirius', gender: 'Masculino', description: 'Voz masculina, versátil e neutra.', sampleText: 'Aqui é Sirius. Uma voz versátil para qualquer tipo de projeto que você imaginar.' },
+  { id: 'Algenib', name: 'Algenib', gender: 'Feminino', description: 'Voz feminina, clara e profissional.', sampleAudioUrl: '/samples/algenib.mp3', profilePictureUrl: 'https://picsum.photos/seed/algenib/100/100' },
+  { id: 'Antares', name: 'Antares', gender: 'Masculino', description: 'Voz masculina, grave e confiante.', sampleAudioUrl: '/samples/antares.mp3', profilePictureUrl: 'https://picsum.photos/seed/antares/100/100' },
+  { id: 'Arcturus', name: 'Arcturus', gender: 'Masculino', description: 'Voz masculina, amigável e energética.', sampleAudioUrl: '/samples/arcturus.mp3', profilePictureUrl: 'https://picsum.photos/seed/arcturus/100/100' },
+  { id: 'Rigel', name: 'Rigel', gender: 'Masculino', description: 'Voz masculina, calma e narrativa.', sampleAudioUrl: '/samples/rigel.mp3', profilePictureUrl: 'https://picsum.photos/seed/rigel/100/100' },
+  { id: 'Spica', name: 'Spica', gender: 'Feminino', description: 'Voz feminina, jovem e dinâmica.', sampleAudioUrl: '/samples/spica.mp3', profilePictureUrl: 'https://picsum.photos/seed/spica/100/100' },
+  { id: 'Vega', name: 'Vega', gender: 'Feminino', description: 'Voz feminina, madura e sofisticada.', sampleAudioUrl: '/samples/vega.mp3', profilePictureUrl: 'https://picsum.photos/seed/vega/100/100' },
+  { id: 'Sirius', name: 'Sirius', gender: 'Masculino', description: 'Voz masculina, versátil e neutra.', sampleAudioUrl: '/samples/sirius.mp3', profilePictureUrl: 'https://picsum.photos/seed/sirius/100/100' },
 ];
 
 export type Order = {

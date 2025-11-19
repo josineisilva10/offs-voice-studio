@@ -152,7 +152,7 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
     }
   }
 
-  const handlePlaySample = async () => {
+  const handlePlaySample = () => {
     const voiceId = form.getValues('voiceName');
     if (!voiceId) {
       toast({ title: 'Selecione uma voz', description: 'Você precisa selecionar uma voz para ouvir a demonstração.', variant: 'destructive'});
@@ -176,19 +176,29 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
       const voice = availableVoices.find(v => v.id === voiceId);
       if (!voice) return;
       
-      const result = await generateVoiceFromText({ text: voice.sampleText, voiceName: voice.id });
-      const newAudio = new Audio(result.audioDataUri);
-      newAudio.play();
+      const newAudio = new Audio(voice.sampleAudioUrl);
+      newAudio.oncanplaythrough = () => {
+        newAudio.play();
+        setIsSampleLoading(false);
+        setIsSamplePlaying(true);
+      };
       newAudio.onended = () => {
         setIsSamplePlaying(false);
       };
+      newAudio.onerror = () => {
+        console.error('Failed to play sample:', voice.sampleAudioUrl);
+        toast({
+            title: 'Erro ao Tocar Amostra',
+            description: 'Não foi possível carregar o áudio de demonstração.',
+            variant: 'destructive',
+        });
+        setIsSampleLoading(false);
+      }
       setSampleAudio(newAudio);
-      setIsSamplePlaying(true);
     } catch (error) {
       console.error('Failed to play sample:', error);
       toast({ title: 'Erro', description: 'Não foi possível reproduzir a amostra.', variant: 'destructive' });
-    } finally {
-      setIsSampleLoading(false);
+       setIsSampleLoading(false);
     }
   }
 
@@ -528,5 +538,3 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
     </Form>
   );
 }
-
-    
