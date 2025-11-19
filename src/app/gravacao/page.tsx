@@ -1,6 +1,7 @@
 import { PageHeader } from '@/components/page-header';
 import { VoiceGenerationForm } from './voice-generation-form';
 import { voices } from '@/lib/data';
+import { recordingStyles, locutionStyles } from '@/lib/data';
 
 export default function GravacaoPage() {
   return (
@@ -9,7 +10,11 @@ export default function GravacaoPage() {
         title="Gravação de Voz"
         description="Digite seu texto, escolha uma voz e gere seu áudio em segundos."
       />
-      <VoiceGenerationForm availableVoices={voices} />
+      <VoiceGenerationForm 
+        availableVoices={voices}
+        recordingStyles={recordingStyles}
+        locutionStyles={locutionStyles}
+      />
     </div>
   );
 }

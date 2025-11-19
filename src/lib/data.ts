@@ -46,3 +46,28 @@ export const creditPackages: CreditPackage[] = [
   { id: 3, credits: 500, price: 79.90, bonus: '+15% Bônus', popular: true },
   { id: 4, credits: 1000, price: 149.90, bonus: '+20% Bônus' },
 ];
+
+export type RecordingStyle = {
+  id: string;
+  name: string;
+};
+
+export const recordingStyles: RecordingStyle[] = [
+    { id: 'abertura', name: 'Abertura' },
+    { id: 'comercial', name: 'Comercial' },
+    { id: 'chamada_festa', name: 'Chamada para Festa' },
+    { id: 'vinhetas', name: 'Vinhetas' },
+];
+
+export type LocutionStyle = {
+  id: string;
+  name: string;
+};
+
+export const locutionStyles: LocutionStyle[] = [
+    { id: 'padrao', name: 'Padrão' },
+    { id: 'impacto', name: 'Impacto' },
+    { id: 'varejo', name: 'Varejo' },
+    { id: 'jovem', name: 'Jovem' },
+    { id: 'outros', name: 'Outros' },
+];
