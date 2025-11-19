@@ -19,8 +19,9 @@ import { Loader2, Mic, Play, Download, Upload, Waves, AudioLines, Square, Wallet
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-const WORDS_PER_MINUTE = 140;
+const CHARS_PER_10_SECONDS = 115;
 const SECONDS_PER_CREDIT = 40;
+
 
 const formSchema = z.object({
   recordingName: z.string().min(1, { message: 'Por favor, dê um nome para a sua gravação.' }),
@@ -80,20 +81,20 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
 
     if (isVignette) {
       const [ , vt1, vt2, vt3, vt4] = watchedTexts;
-      textForCalculation = [vt1, vt2, vt3, vt4].filter(Boolean).join(' ');
+      textForCalculation = [vt1, vt2, vt3, vt4].filter(Boolean).join('');
     } else {
       textForCalculation = watchedTexts[0] || '';
     }
     
-    const totalWords = textForCalculation.trim().split(/\s+/).filter(Boolean).length;
-    const timeInSeconds = Math.ceil((totalWords / WORDS_PER_MINUTE) * 60);
+    const totalChars = textForCalculation.length;
+    const timeInSeconds = Math.ceil((totalChars / CHARS_PER_10_SECONDS) * 10);
     setEstimatedTime(timeInSeconds);
-
+    
     if (timeInSeconds === 0) {
-      setCredits(0);
+        setCredits(0);
     } else {
-      const calculatedCredits = Math.floor((timeInSeconds - 1) / SECONDS_PER_CREDIT) + 1;
-      setCredits(calculatedCredits);
+        const calculatedCredits = Math.floor((timeInSeconds - 1) / SECONDS_PER_CREDIT) + 1;
+        setCredits(calculatedCredits);
     }
 
   }, [watchedTexts, watchedRecordingStyle]);
@@ -188,9 +189,9 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
     } finally {
       setIsSampleLoading(false);
     }
-  };
+  }
 
-  const isVignetteMode = watchedRecordingStyle === 'vinhetas';
+  const isVignetteMode = watchedRecordingStyle === 'vinhetas'
 
   return (
     <Card>
@@ -326,7 +327,7 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o estilo" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {locutionStyles.map((style) => (
