@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Mic, Play, Download, Upload, Waves, AudioLines } from 'lucide-react';
+import { Loader2, Mic, Play, Download, Upload, Waves, AudioLines, Square, Wallet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +48,9 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
   const [isLoading, setIsLoading] = useState(false);
   const [estimatedTime, setEstimatedTime] = useState(0);
   const [credits, setCredits] = useState(0);
+  const [sampleAudio, setSampleAudio] = useState<HTMLAudioElement | null>(null);
+  const [isSampleLoading, setIsSampleLoading] = useState(false);
+  const [isSamplePlaying, setIsSamplePlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
 
@@ -68,6 +71,7 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
 
   const watchedRecordingStyle = useWatch({ control: form.control, name: 'recordingStyle' });
   const watchedTexts = useWatch({ control: form.control, name: ['mainText', 'vignetteText1', 'vignetteText2', 'vignetteText3', 'vignetteText4'] });
+  const watchedVoice = useWatch({ control: form.control, name: 'voiceName' });
 
   useEffect(() => {
     const isVignette = watchedRecordingStyle === 'vinhetas';
@@ -92,6 +96,14 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
       setCredits(timeInSeconds > 0 ? Math.floor((timeInSeconds - 1) / 40) + 1 : 0);
     }
   }, [watchedTexts, watchedRecordingStyle]);
+  
+  useEffect(() => {
+    // Stop any playing sample when the voice selection changes
+    if (sampleAudio) {
+      sampleAudio.pause();
+      setIsSamplePlaying(false);
+    }
+  }, [watchedVoice]);
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -135,6 +147,46 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
       setIsLoading(false);
     }
   }
+
+  const handlePlaySample = async () => {
+    const voiceId = form.getValues('voiceName');
+    if (!voiceId) {
+      toast({ title: 'Selecione uma voz', description: 'Você precisa selecionar uma voz para ouvir a demonstração.', variant: 'destructive'});
+      return;
+    }
+
+    if (isSamplePlaying && sampleAudio) {
+      sampleAudio.pause();
+      setIsSamplePlaying(false);
+      return;
+    }
+    
+    if (sampleAudio) {
+      sampleAudio.pause();
+    }
+    
+    setIsSampleLoading(true);
+    setIsSamplePlaying(false);
+
+    try {
+      const voice = availableVoices.find(v => v.id === voiceId);
+      if (!voice) return;
+      
+      const result = await generateVoiceFromText({ text: voice.sampleText, voiceName: voice.id });
+      const newAudio = new Audio(result.audioDataUri);
+      newAudio.play();
+      newAudio.onended = () => {
+        setIsSamplePlaying(false);
+      };
+      setSampleAudio(newAudio);
+      setIsSamplePlaying(true);
+    } catch (error) {
+      console.error('Failed to play sample:', error);
+      toast({ title: 'Erro', description: 'Não foi possível reproduzir a amostra.', variant: 'destructive' });
+    } finally {
+      setIsSampleLoading(false);
+    }
+  };
 
   const isVignetteMode = watchedRecordingStyle === 'vinhetas';
 
@@ -199,20 +251,38 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Voz</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma voz" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableVoices.map((voice) => (
-                          <SelectItem key={voice.id} value={voice.id}>
-                            {voice.name} ({voice.gender})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma voz" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableVoices.map((voice) => (
+                            <SelectItem key={voice.id} value={voice.id}>
+                              {voice.name} ({voice.gender})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                       <Button 
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={handlePlaySample}
+                          disabled={isSampleLoading || !watchedVoice}
+                          aria-label="Ouvir demonstração"
+                       >
+                          {isSampleLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : isSamplePlaying ? (
+                            <Square className="h-4 w-4" />
+                          ) : (
+                            <Play className="h-4 w-4" />
+                          )}
+                       </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -341,15 +411,18 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
             )}
            
 
-            <div className="p-4 bg-muted/50 rounded-lg flex items-center justify-around text-center">
-              <div>
-                <div className="text-sm text-muted-foreground">Tempo Estimado</div>
-                <div className="text-2xl font-bold font-headline">{estimatedTime}s</div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-muted/50 rounded-lg flex flex-col items-center justify-center text-center">
+                  <div className="text-sm text-muted-foreground mb-1">Tempo Estimado</div>
+                  <div className="text-2xl font-bold font-headline">{estimatedTime}s</div>
               </div>
-              <div className="h-10 w-px bg-border"></div>
-               <div>
-                <div className="text-sm text-muted-foreground">Créditos a Serem Usados</div>
-                <div className="text-2xl font-bold font-headline">{credits}</div>
+              <div className="p-4 bg-muted/50 rounded-lg flex flex-col items-center justify-center text-center">
+                  <div className="text-sm text-muted-foreground mb-1">Créditos a Serem Usados</div>
+                  <div className="text-2xl font-bold font-headline">{credits}</div>
+              </div>
+               <div className="p-4 bg-muted/50 rounded-lg flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center text-sm text-muted-foreground mb-1"><Wallet className="mr-2 h-4 w-4" /> Saldo Atual</div>
+                  <div className="text-2xl font-bold font-headline">1.250</div>
               </div>
             </div>
 
