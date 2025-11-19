@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -194,9 +195,9 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
   const isVignetteMode = watchedRecordingStyle === 'vinhetas'
 
   return (
-    <Card>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <Card>
           <CardHeader>
             <CardTitle>Gerar Nova Gravação</CardTitle>
             <CardDescription>Preencha os detalhes abaixo para criar sua locução personalizada.</CardDescription>
@@ -327,7 +328,7 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o estilo" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {locutionStyles.map((style) => (
@@ -522,8 +523,10 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
               )}
             </Button>
           </CardFooter>
-        </form>
-      </Form>
-    </Card>
+        </Card>
+      </form>
+    </Form>
   );
 }
+
+    
