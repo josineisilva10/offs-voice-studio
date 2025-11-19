@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 
 function PackageCard({ pkg }: { pkg: CreditPackage }) {
+  const pricePerCredit = pkg.credits > 0 ? pkg.price / pkg.credits : 0;
+
   return (
     <Card className={cn("flex flex-col", pkg.popular && "border-primary ring-2 ring-primary")}>
       {pkg.popular && (
@@ -18,8 +20,15 @@ function PackageCard({ pkg }: { pkg: CreditPackage }) {
         <CardTitle className="font-headline text-2xl">{pkg.name}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow text-center">
-        <div className="text-4xl font-bold font-headline mb-4">
-          R$ {pkg.price.toFixed(2).replace('.', ',')}
+        <div className="mb-4">
+            <div className="text-4xl font-bold font-headline">
+            R$ {pkg.price.toFixed(2).replace('.', ',')}
+            </div>
+            {pkg.credits > 1 && (
+                 <p className="text-sm text-muted-foreground">
+                    (R$ {pricePerCredit.toFixed(2).replace('.', ',')} por crédito)
+                 </p>
+            )}
         </div>
         <ul className="space-y-2 text-sm text-muted-foreground">
           {pkg.features.map((feature, index) => (
