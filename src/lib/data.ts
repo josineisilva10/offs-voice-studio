@@ -34,18 +34,24 @@ export const orders: Order[] = [
 
 export type CreditPackage = {
   id: number;
-  credits: number;
+  name: string;
   price: number;
-  bonus?: string;
+  features: string[];
   popular?: boolean;
 };
 
-export const creditPackages: CreditPackage[] = [
-  { id: 1, credits: 100, price: 19.90 },
-  { id: 2, credits: 250, price: 44.90, bonus: '+10% Bônus' },
-  { id: 3, credits: 500, price: 79.90, bonus: '+15% Bônus', popular: true },
-  { id: 4, credits: 1000, price: 149.90, bonus: '+20% Bônus' },
+export const offsPackages: CreditPackage[] = [
+  { id: 1, name: 'Pacote 1 Crédito', price: 6, features: ['Texto até 40 segundos', 'Crédito não expira'] },
+  { id: 2, name: 'Pacote 5 Créditos', price: 25, features: ['Texto até 40s por crédito', 'Crédito não expira'], popular: true },
+  { id: 3, name: 'Pacote 10 Créditos', price: 40, features: ['Texto até 40s por crédito', 'Crédito não expira'] },
 ];
+
+export const producedPackages: CreditPackage[] = [
+  { id: 1, name: 'Pacote 1 Crédito', price: 15, features: ['Texto até 40 segundos', 'Crédito não expira'] },
+  { id: 2, name: 'Pacote 5 Créditos', price: 65, features: ['Texto até 40s por crédito', 'Crédito não expira'], popular: true },
+  { id: 3, name: 'Pacote 10 Créditos', price: 130, features: ['Texto até 40s por crédito', 'Crédito não expira'] },
+];
+
 
 export type RecordingStyle = {
   id: string;
