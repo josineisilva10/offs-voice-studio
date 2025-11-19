@@ -15,6 +15,7 @@ export const voices: Voice[] = [
   { id: 'Spica', name: 'Spica', gender: 'Feminino', description: 'Voz feminina, jovem e dinâmica.', sampleAudioUrl: '/samples/spica.mp3', profilePictureUrl: 'https://picsum.photos/seed/spica/100/100' },
   { id: 'Vega', name: 'Vega', gender: 'Feminino', description: 'Voz feminina, madura e sofisticada.', sampleAudioUrl: '/samples/vega.mp3', profilePictureUrl: 'https://picsum.photos/seed/vega/100/100' },
   { id: 'Sirius', name: 'Sirius', gender: 'Masculino', description: 'Voz masculina, versátil e neutra.', sampleAudioUrl: '/samples/sirius.mp3', profilePictureUrl: 'https://picsum.photos/seed/sirius/100/100' },
+  { id: 'Marcos Vinicius', name: 'Marcos Vinicius', gender: 'Masculino', description: 'Voz masculina, ideal para comerciais e narrações.', sampleAudioUrl: '/samples/marcosvinicius.mp3', profilePictureUrl: 'https://picsum.photos/seed/marcosvinicius/100/100' },
 ];
 
 export type Order = {
