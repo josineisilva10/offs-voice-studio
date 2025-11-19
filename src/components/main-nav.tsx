@@ -13,6 +13,7 @@ import {
   Voicemail,
   FileText,
   CreditCard,
+  FlaskConical,
 } from 'lucide-react';
 
 const links = [
@@ -22,6 +23,7 @@ const links = [
   { href: '/vozes', label: 'Lista de Vozes', icon: Voicemail },
   { href: '/gerador-texto', label: 'Gerador de Texto', icon: FileText },
   { href: '/creditos', label: 'Créditos e Pacotes', icon: CreditCard },
+  { href: '/funcoes-ia', label: 'Funções de IA', icon: FlaskConical },
 ];
 
 export function MainNav() {
