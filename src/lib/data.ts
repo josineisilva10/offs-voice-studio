@@ -50,7 +50,7 @@ export const offsPackages: CreditPackage[] = [
 export const producedPackages: CreditPackage[] = [
   { id: 1, name: 'Pacote 1 Crédito', price: 15, credits: 1, features: ['Texto até 40 segundos', 'Crédito não expira'] },
   { id: 2, name: 'Pacote 5 Créditos', price: 65, credits: 5, features: ['Texto até 40s por crédito', 'Crédito não expira'], popular: true },
-  { id: 3, name: 'Pacote 10 Créditos', price: 130, credits: 10, features: ['Texto até 40s por crédito', 'Crédito não expira'] },
+  { id: 3, name: 'Pacote 10 Créditos', price: 120, credits: 10, features: ['Texto até 40s por crédito', 'Crédito não expira'] },
 ];
 
 
