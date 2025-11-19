@@ -75,26 +75,20 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
 
   useEffect(() => {
     const isVignette = watchedRecordingStyle === 'vinhetas';
-    let totalWords = 0;
+    let textForCalculation = '';
 
     if (isVignette) {
       const [ , vt1, vt2, vt3, vt4] = watchedTexts;
-      const vignetteWords = [vt1, vt2, vt3, vt4]
-        .map(text => text?.trim().split(/\s+/).filter(Boolean).length || 0)
-        .reduce((sum, count) => sum + count, 0);
-      
-      const timePerVignette = 10; // 10 seconds per vignette field
-      const totalTime = [vt1, vt2, vt3, vt4].filter(text => text && text.trim().length > 0).length * timePerVignette;
-      setEstimatedTime(totalTime);
-      setCredits(Math.ceil(totalTime / 10) || 0);
-
+      textForCalculation = [vt1, vt2, vt3, vt4].filter(Boolean).join(' ');
     } else {
-      const mainText = watchedTexts[0] || '';
-      totalWords = mainText.trim().split(/\s+/).filter(Boolean).length;
-      const timeInSeconds = Math.ceil((totalWords / WORDS_PER_MINUTE) * 60);
-      setEstimatedTime(timeInSeconds);
-      setCredits(timeInSeconds > 0 ? Math.floor((timeInSeconds - 1) / 40) + 1 : 0);
+      textForCalculation = watchedTexts[0] || '';
     }
+    
+    const totalWords = textForCalculation.trim().split(/\s+/).filter(Boolean).length;
+    const timeInSeconds = Math.ceil((totalWords / WORDS_PER_MINUTE) * 60);
+    setEstimatedTime(timeInSeconds);
+    setCredits(timeInSeconds > 0 ? Math.floor((timeInSeconds - 1) / 40) + 1 : 0);
+
   }, [watchedTexts, watchedRecordingStyle]);
   
   useEffect(() => {
@@ -342,7 +336,7 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
             
             {isVignetteMode ? (
               <div className="space-y-4">
-                <FormLabel>Textos para Vinhetas (4 campos de 10s cada)</FormLabel>
+                <FormLabel>Textos para Vinhetas</FormLabel>
                  <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
