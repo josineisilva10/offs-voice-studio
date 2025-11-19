@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 const WORDS_PER_MINUTE = 140;
+const SECONDS_PER_CREDIT = 40;
 
 const formSchema = z.object({
   recordingName: z.string().min(1, { message: 'Por favor, dê um nome para a sua gravação.' }),
@@ -87,7 +88,13 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
     const totalWords = textForCalculation.trim().split(/\s+/).filter(Boolean).length;
     const timeInSeconds = Math.ceil((totalWords / WORDS_PER_MINUTE) * 60);
     setEstimatedTime(timeInSeconds);
-    setCredits(timeInSeconds > 0 ? Math.floor(timeInSeconds / 40) + 1 : 0);
+
+    if (timeInSeconds === 0) {
+      setCredits(0);
+    } else {
+      const calculatedCredits = Math.floor((timeInSeconds - 1) / SECONDS_PER_CREDIT) + 1;
+      setCredits(calculatedCredits);
+    }
 
   }, [watchedTexts, watchedRecordingStyle]);
   
