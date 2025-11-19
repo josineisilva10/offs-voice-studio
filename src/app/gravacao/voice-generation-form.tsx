@@ -87,7 +87,7 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
     const totalWords = textForCalculation.trim().split(/\s+/).filter(Boolean).length;
     const timeInSeconds = Math.ceil((totalWords / WORDS_PER_MINUTE) * 60);
     setEstimatedTime(timeInSeconds);
-    setCredits(timeInSeconds > 0 ? Math.floor((timeInSeconds - 1) / 40) + 1 : 0);
+    setCredits(timeInSeconds > 0 ? Math.floor(timeInSeconds / 40) + 1 : 0);
 
   }, [watchedTexts, watchedRecordingStyle]);
   
@@ -97,6 +97,7 @@ export function VoiceGenerationForm({ availableVoices, recordingStyles, locution
       sampleAudio.pause();
       setIsSamplePlaying(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedVoice]);
 
 
