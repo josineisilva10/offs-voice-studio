@@ -88,10 +88,20 @@ export default {
             height: '0',
           },
         },
+        'wave': {
+          '0%, 100%': { height: '25%' },
+          '50%': { height: '100%' },
+        },
+        'wave-quiet': {
+          '0%, 100%': { height: '15%' },
+          '50%': { height: '30%' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'wave': 'wave 1.2s cubic-bezier(0.45, 0, 0.55, 1) infinite',
+        'wave-quiet': 'wave-quiet 2s ease-in-out infinite',
       },
     },
   },

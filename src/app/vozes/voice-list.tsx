@@ -1,14 +1,58 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import type { Voice } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Play, Loader2, Square, Waves } from 'lucide-react';
+import { Play, Loader2, Square } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+
+// New component for the animated sound wave
+function SoundWave({ isPlaying }: { isPlaying: boolean }) {
+  return (
+    <div className="flex h-6 w-6 items-end gap-0.5">
+      <span
+        className={cn(
+          'w-1 animate-wave-quiet bg-muted-foreground/70',
+          isPlaying && 'animate-wave bg-primary'
+        )}
+        style={{ animationDelay: '0ms' }}
+      ></span>
+      <span
+        className={cn(
+          'w-1 animate-wave-quiet bg-muted-foreground/70',
+          isPlaying && 'animate-wave bg-primary'
+        )}
+        style={{ animationDelay: '100ms' }}
+      ></span>
+      <span
+        className={cn(
+          'w-1 animate-wave-quiet bg-muted-foreground/70',
+          isPlaying && 'animate-wave bg-primary'
+        )}
+        style={{ animationDelay: '200ms' }}
+      ></span>
+      <span
+        className={cn(
+          'w-1 animate-wave-quiet bg-muted-foreground/70',
+          isPlaying && 'animate-wave bg-primary'
+        )}
+        style={{ animationDelay: '300ms' }}
+      ></span>
+       <span
+        className={cn(
+          'w-1 animate-wave-quiet bg-muted-foreground/70',
+          isPlaying && 'animate-wave bg-primary'
+        )}
+        style={{ animationDelay: '400ms' }}
+      ></span>
+    </div>
+  );
+}
+
 
 type VoiceListProps = {
   voices: Voice[];
@@ -95,7 +139,7 @@ export function VoiceList({ voices }: VoiceListProps) {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <Waves className={cn("text-muted-foreground transition-colors", playingId === voice.id && "text-primary")} />
+                    <SoundWave isPlaying={playingId === voice.id} />
                     <Button 
                         variant="outline" 
                         size="icon"
