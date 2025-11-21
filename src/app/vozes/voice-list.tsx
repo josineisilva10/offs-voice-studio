@@ -12,43 +12,26 @@ import { cn } from '@/lib/utils';
 
 // New component for the animated sound wave
 function SoundWave({ isPlaying }: { isPlaying: boolean }) {
+  // More bars for a bigger wave
+  const bars = Array.from({ length: 30 });
   return (
-    <div className="flex h-6 w-6 items-end gap-0.5">
-      <span
-        className={cn(
-          'w-1 animate-wave-quiet bg-muted-foreground/70',
-          isPlaying && 'animate-wave bg-primary'
-        )}
-        style={{ animationDelay: '0ms' }}
+    <div className={cn(
+        "flex h-12 w-full items-end gap-1 transition-opacity duration-300",
+        isPlaying ? "opacity-100" : "opacity-0"
+    )}>
+      {bars.map((_, i) => (
+         <span
+            key={i}
+            className={cn(
+                'w-1 bg-primary/70',
+                isPlaying && 'animate-wave'
+            )}
+            style={{ 
+                animationDelay: `${i * 40}ms`,
+                animationDuration: `${Math.random() * (1.5 - 0.8) + 0.8}s`
+            }}
       ></span>
-      <span
-        className={cn(
-          'w-1 animate-wave-quiet bg-muted-foreground/70',
-          isPlaying && 'animate-wave bg-primary'
-        )}
-        style={{ animationDelay: '100ms' }}
-      ></span>
-      <span
-        className={cn(
-          'w-1 animate-wave-quiet bg-muted-foreground/70',
-          isPlaying && 'animate-wave bg-primary'
-        )}
-        style={{ animationDelay: '200ms' }}
-      ></span>
-      <span
-        className={cn(
-          'w-1 animate-wave-quiet bg-muted-foreground/70',
-          isPlaying && 'animate-wave bg-primary'
-        )}
-        style={{ animationDelay: '300ms' }}
-      ></span>
-       <span
-        className={cn(
-          'w-1 animate-wave-quiet bg-muted-foreground/70',
-          isPlaying && 'animate-wave bg-primary'
-        )}
-        style={{ animationDelay: '400ms' }}
-      ></span>
+      ))}
     </div>
   );
 }
@@ -124,22 +107,25 @@ export function VoiceList({ voices }: VoiceListProps) {
     <div className="space-y-4">
       {voices.map((voice) => (
         <Card key={voice.id}>
-            <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex items-center gap-4 w-1/3">
                      <Avatar className="w-16 h-16">
                         <AvatarImage asChild src={voice.profilePictureUrl} data-ai-hint="person face">
                             <Image src={voice.profilePictureUrl} alt={voice.name} width={64} height={64} />
                         </AvatarImage>
                         <AvatarFallback>{voice.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className='space-y-1'>
+                    <div className='space-y-1 truncate'>
                         <h3 className="font-headline text-lg font-semibold">{voice.name}</h3>
-                        <p className="text-sm text-muted-foreground">{voice.description}</p>
+                        <p className="text-sm text-muted-foreground truncate">{voice.description}</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex-1 px-4 flex items-center justify-center">
                     <SoundWave isPlaying={playingId === voice.id} />
+                </div>
+
+                <div className="flex items-center">
                     <Button 
                         variant="outline" 
                         size="icon"
