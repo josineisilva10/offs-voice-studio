@@ -1,3 +1,4 @@
+
 export type Voice = {
   id: string;
   name: string;
@@ -15,7 +16,7 @@ export const voices: Voice[] = [
   { id: 'Spica', name: 'Spica', gender: 'Feminino', description: 'Voz feminina, jovem e dinâmica.', sampleAudioUrl: '/samples/spica.mp3', profilePictureUrl: 'https://picsum.photos/seed/spica/100/100' },
   { id: 'Vega', name: 'Vega', gender: 'Feminino', description: 'Voz feminina, madura e sofisticada.', sampleAudioUrl: '/samples/vega.mp3', profilePictureUrl: 'https://picsum.photos/seed/vega/100/100' },
   { id: 'Sirius', name: 'Sirius', gender: 'Masculino', description: 'Voz masculina, versátil e neutra.', sampleAudioUrl: '/samples/sirius.mp3', profilePictureUrl: 'https://picsum.photos/seed/sirius/100/100' },
-  { id: 'Marcos Vinicius', name: 'Marcos Vinicius', gender: 'Masculino', description: 'Voz masculina, ideal para comerciais e narrações.', sampleAudioUrl: '/samples/marcosvinicius.mp3', profilePictureUrl: 'https://picsum.photos/seed/marcosvinicius/100/100' },
+  { id: 'Marcos Vinicius', name: 'Marcos Vinicius', gender: 'Masculino', description: 'Voz masculina, ideal para comerciais e narrações.', sampleAudioUrl: 'https://firebasestorage.googleapis.com/v0/b/studio-611847233-7c1f1.firebasestorage.app/o/MARCOS%20VIN%C3%8DCIUS_principal.mp3?alt=media&token=e618408f-4fab-4151-abae-d92f836e29b4', profilePictureUrl: 'https://picsum.photos/seed/marcosvinicius/100/100' },
 ];
 
 export type Order = {
@@ -27,7 +28,7 @@ export type Order = {
 };
 
 export const orders: Order[] = [
-  { id: 'VG001', text: 'Bem-vindo ao VozGenius, a sua plataforma...', voice: 'Algenib', date: '2024-07-28', status: 'Concluído' },
+  { id: 'VG001', text: 'Bem-vindo ao OffsVoiceStudio, a sua plataforma...', voice: 'Algenib', date: '2024-07-28', status: 'Concluído' },
   { id: 'VG002', text: 'Promoção imperdível! Compre agora e...', voice: 'Arcturus', date: '2024-07-27', status: 'Concluído' },
   { id: 'VG003', text: 'Este é um tutorial sobre como usar nossa...', voice: 'Rigel', date: '2024-07-27', status: 'Processando' },
   { id: 'VG004', text: 'Anúncio importante para todos os clientes...', voice: 'Antares', date: '2024-07-26', status: 'Concluído' },
