@@ -41,6 +41,17 @@ export const voices: Voice[] = [
   { id: 'marcos-vinicius', name: 'MARCOS VINÍCIUS', gender: 'Masculino', description: 'Padrão, Impacto, jovem, varejo, Papai noel', sampleAudioUrl: 'https://firebasestorage.googleapis.com/v0/b/studio-611847233-7c1f1.firebasestorage.app/o/MARCOS%20VIN%C3%8DCIUS_principal.mp3?alt=media&token=e618408f-4fab-4151-abae-d92f836e29b4', profilePictureUrl: 'https://picsum.photos/seed/marcos-vinicius/100/100' },
 ];
 
+export const staticVoiceActors: VoiceActor[] = [
+    { id: 'Algenib', name: 'Algenib', description: 'Voz feminina, clara e profissional.', sampleAudioUrl: '/samples/algenib.mp3', imageUrl: 'https://picsum.photos/seed/algenib/100/100' },
+    { id: 'Antares', name: 'Antares', description: 'Voz masculina, grave e confiante.', sampleAudioUrl: '/samples/antares.mp3', imageUrl: 'https://picsum.photos/seed/antares/100/100' },
+    { id: 'Arcturus', name: 'Arcturus', description: 'Voz masculina, amigável e energética.', sampleAudioUrl: '/samples/arcturus.mp3', imageUrl: 'https://picsum.photos/seed/arcturus/100/100' },
+    { id: 'Rigel', name: 'Rigel', description: 'Voz masculina, calma e narrativa.', sampleAudioUrl: '/samples/rigel.mp3', imageUrl: 'https://picsum.photos/seed/rigel/100/100' },
+    { id: 'Spica', name: 'Spica', description: 'Voz feminina, jovem e dinâmica.', sampleAudioUrl: '/samples/spica.mp3', imageUrl: 'https://picsum.photos/seed/spica/100/100' },
+    { id: 'Vega', name: 'Vega', description: 'Voz feminina, madura e sofisticada.', sampleAudioUrl: '/samples/vega.mp3', imageUrl: 'https://picsum.photos/seed/vega/100/100' },
+    { id: 'Sirius', name: 'Sirius', description: 'Voz masculina, versátil e neutra.', sampleAudioUrl: '/samples/sirius.mp3', imageUrl: 'https://picsum.photos/seed/sirius/100/100' },
+    { id: 'marcos-vinicius-static', name: 'MARCOS VINÍCIUS', description: 'Padrão, Impacto, jovem, varejo, Papai noel', sampleAudioUrl: 'https://firebasestorage.googleapis.com/v0/b/studio-611847233-7c1f1.firebasestorage.app/o/MARCOS%20VIN%C3%8DCIUS_principal.mp3?alt=media&token=e618408f-4fab-4151-abae-d92f836e29b4', imageUrl: 'https://picsum.photos/seed/marcos-vinicius/100/100' },
+];
+
 export type Order = {
   id: string;
   text: string;
@@ -103,4 +114,5 @@ export const locutionStyles: LocutionStyle[] = [
     { id: 'jovem', name: 'Jovem' },
     { id: 'outros', name: 'Outros' },
 ];
+
 
