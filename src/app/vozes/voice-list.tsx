@@ -10,30 +10,14 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { VoiceActor } from '@/lib/data';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { VoiceActorDemos } from './voice-actor-demos';
 
-function SoundWave({ isPlaying }: { isPlaying: boolean }) {
-  const bars = Array.from({ length: 30 });
-  return (
-    <div className={cn(
-        "flex h-12 w-full items-end gap-1 transition-opacity duration-300",
-        isPlaying ? "opacity-100" : "opacity-0"
-    )}>
-      {bars.map((_, i) => (
-         <span
-            key={i}
-            className={cn(
-                'w-1 bg-primary/70',
-                isPlaying && 'animate-wave'
-            )}
-            style={{ 
-                animationDelay: `${i * 40}ms`,
-                animationDuration: `${Math.random() * (1.5 - 0.8) + 0.8}s`
-            }}
-      ></span>
-      ))}
-    </div>
-  );
-}
 
 type VoiceListProps = {
   voices: VoiceActor[];
@@ -46,7 +30,8 @@ export function VoiceList({ voices, isLoading }: VoiceListProps) {
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const { toast } = useToast();
 
-  const handlePlaySample = (voice: VoiceActor) => {
+  const handlePlaySample = (e: React.MouseEvent, voice: VoiceActor) => {
+    e.stopPropagation(); // Prevent accordion from toggling
     if (!voice.sampleAudioUrl) {
         toast({
             title: 'Áudio não disponível',
@@ -56,7 +41,8 @@ export function VoiceList({ voices, isLoading }: VoiceListProps) {
         return;
     }
 
-    if (playingId === voice.id && audio) {
+    const sampleId = `sample-${voice.id}`;
+    if (playingId === sampleId && audio) {
       audio.pause();
       setPlayingId(null);
       return;
@@ -66,7 +52,7 @@ export function VoiceList({ voices, isLoading }: VoiceListProps) {
       audio.pause();
     }
 
-    setLoadingId(voice.id);
+    setLoadingId(sampleId);
     setPlayingId(null);
 
     try {
@@ -75,15 +61,15 @@ export function VoiceList({ voices, isLoading }: VoiceListProps) {
       newAudio.oncanplaythrough = () => {
         newAudio.play();
         setLoadingId(null);
-        setPlayingId(voice.id);
+        setPlayingId(sampleId);
       };
 
       newAudio.onended = () => {
         setPlayingId(null);
       };
 
-      newAudio.onerror = (e) => {
-        console.error('Failed to play sample:', voice.sampleAudioUrl, e);
+      newAudio.onerror = (err) => {
+        console.error('Failed to play sample:', voice.sampleAudioUrl, err);
         toast({
           title: 'Erro ao Tocar Amostra',
           description: 'Não foi possível carregar o áudio. Verifique se a URL está correta.',
@@ -130,62 +116,71 @@ export function VoiceList({ voices, isLoading }: VoiceListProps) {
   }
 
   return (
-    <div className="space-y-4">
+     <Accordion type="single" collapsible className="w-full space-y-4">
       {voices.map((voice) => (
-        <Card key={voice.id}>
-            <CardContent className="p-4 flex items-center gap-4">
-                <div className="flex items-center gap-4 w-1/3">
-                     <Avatar className="w-16 h-16">
-                        <AvatarImage asChild src={voice.imageUrl || `https://picsum.photos/seed/${voice.id}/100/100`} data-ai-hint="person face">
-                            <Image src={voice.imageUrl || `https://picsum.photos/seed/${voice.id}/100/100`} alt={voice.name} width={64} height={64} />
-                        </AvatarImage>
-                        <AvatarFallback>{voice.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className='space-y-1 truncate'>
-                        <h3 className="font-headline text-lg font-semibold">{voice.name}</h3>
-                        <p className="text-sm text-muted-foreground truncate">{voice.description}</p>
-                         <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
-                            {voice.status && (
-                                <div className={cn("flex items-center gap-1.5", voice.status === 'online' ? 'text-green-500' : 'text-amber-500')}>
-                                    {voice.status === 'online' ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-                                    <span className="capitalize">{voice.status}</span>
-                                </div>
-                            )}
-                            {voice.deliveryTimeMinutes != null && (
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="h-3.5 w-3.5" />
-                                    <span>Entrega em até {voice.deliveryTimeMinutes} min</span>
-                                </div>
-                            )}
+        <AccordionItem value={voice.id} key={voice.id} className="border-b-0">
+           <Card>
+            <AccordionTrigger className="w-full p-4 hover:no-underline">
+                <div className="flex items-center gap-4 w-full">
+                    <div className="flex items-center gap-4 w-1/3">
+                        <Avatar className="w-16 h-16">
+                            <AvatarImage asChild src={voice.imageUrl || `https://picsum.photos/seed/${voice.id}/100/100`} data-ai-hint="person face">
+                                <Image src={voice.imageUrl || `https://picsum.photos/seed/${voice.id}/100/100`} alt={voice.name} width={64} height={64} />
+                            </AvatarImage>
+                            <AvatarFallback>{voice.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className='space-y-1 truncate text-left'>
+                            <h3 className="font-headline text-lg font-semibold">{voice.name}</h3>
+                            <p className="text-sm text-muted-foreground truncate">{voice.description}</p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+                                {voice.status && (
+                                    <div className={cn("flex items-center gap-1.5", voice.status === 'online' ? 'text-green-500' : 'text-amber-500')}>
+                                        {voice.status === 'online' ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                                        <span className="capitalize">{voice.status}</span>
+                                    </div>
+                                )}
+                                {voice.deliveryTimeMinutes != null && (
+                                    <div className="flex items-center gap-1.5">
+                                        <Clock className="h-3.5 w-3.5" />
+                                        <span>Entrega em até {voice.deliveryTimeMinutes} min</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="flex-1 px-4 flex items-center justify-center">
-                    <SoundWave isPlaying={playingId === voice.id} />
-                </div>
+                    <div className="flex-1 px-4 flex items-center justify-center">
+                       {/* Placeholder for future sound wave */}
+                    </div>
 
-                <div className="flex items-center">
-                    <Button 
-                        variant="outline" 
-                        size="icon"
-                        className="w-12 h-12"
-                        onClick={() => handlePlaySample(voice)}
-                        disabled={(loadingId !== null && loadingId !== voice.id) || !voice.sampleAudioUrl}
-                        aria-label={`Ouvir ${voice.name}`}
-                    >
-                        {loadingId === voice.id ? (
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                        ) : playingId === voice.id ? (
-                            <Square className="h-6 w-6" />
-                        ) : (
-                            <Play className="h-6 w-6" />
-                        )}
-                    </Button>
+                    <div className="flex items-center pr-4">
+                        <Button 
+                            variant="outline" 
+                            size="icon"
+                            className="w-12 h-12"
+                            onClick={(e) => handlePlaySample(e, voice)}
+                            disabled={(loadingId !== null && loadingId !== `sample-${voice.id}`) || !voice.sampleAudioUrl}
+                            aria-label={`Ouvir ${voice.name}`}
+                        >
+                            {loadingId === `sample-${voice.id}` ? (
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            ) : playingId === `sample-${voice.id}` ? (
+                                <Square className="h-6 w-6" />
+                            ) : (
+                                <Play className="h-6 w-6" />
+                            )}
+                        </Button>
+                    </div>
                 </div>
-            </CardContent>
-        </Card>
+            </AccordionTrigger>
+            <AccordionContent>
+                <div className="p-4 pt-0">
+                    <VoiceActorDemos voiceActorId={voice.id} />
+                </div>
+            </AccordionContent>
+            </Card>
+        </AccordionItem>
       ))}
-    </div>
+    </Accordion>
   );
 }

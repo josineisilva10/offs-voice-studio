@@ -18,6 +18,17 @@ export type VoiceActor = {
     sampleAudioUrl: string;
 }
 
+export type VoiceActorDemo = {
+  id: string;
+  voiceActorId: string;
+  title: string;
+  description: string;
+  audioUrl: string;
+  imageUrl?: string;
+  demoTypeId?: string;
+};
+
+
 export const voices: Voice[] = [
   { id: 'Algenib', name: 'Algenib', gender: 'Feminino', description: 'Voz feminina, clara e profissional.', sampleAudioUrl: '/samples/algenib.mp3', profilePictureUrl: 'https://picsum.photos/seed/algenib/100/100' },
   { id: 'Antares', name: 'Antares', gender: 'Masculino', description: 'Voz masculina, grave e confiante.', sampleAudioUrl: '/samples/antares.mp3', profilePictureUrl: 'https://picsum.photos/seed/antares/100/100' },
