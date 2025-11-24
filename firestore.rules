@@ -1,0 +1,224 @@
+/**
+ * # Firestore Security Rules for VozGenius
+ *
+ * ## Core Philosophy
+ * This ruleset enforces a strict user-ownership model for all personal data,
+ * combined with role-based access for administrative functions. The primary goal
+ * is to ensure that users can only access and manage their own information,
+ * while global, application-wide data is publicly readable but centrally managed.
+ *
+ * ## Data Structure
+ * - `/users/{userId}`: Root path for all user-specific data. Each user has a
+ *   document here containing their profile.
+ * - `/users/{userId}/recordings/{recordingId}`: Subcollection for a user's voice recordings.
+ * - `/users/{userId}/orders/{orderId}`: Subcollection for a user's purchase orders.
+ * - `/packages/{packageId}`: Top-level collection for publicly viewable credit packages.
+ * - `/voices/{voiceId}`: Top-level collection for publicly available text-to-speech voices.
+ * - `/roles_admin/{userId}`: A dedicated collection where the existence of a document
+ *   identifies a user as an administrator.
+ *
+ * ## Key Security Decisions
+ * - **Strict User Scoping**: All data within the `/users/{userId}` path is strictly
+ *   limited to the authenticated owner of that data tree.
+ * - **No User Listing**: Listing documents in the top-level `/users` collection is
+ *   explicitly disabled to protect user privacy.
+ * - **Public Read-Only Data**: Collections like `/packages` and `/voices` are
+ *   publicly readable by any client, but all write operations are restricted
+ *   to administrators. This allows the app to display offerings without
+ *   requiring authentication, while preventing unauthorized modification.
+ * - **Role-Based Access Control (RBAC)**: An `isAdmin()` function checks for the
+ *   existence of the user's UID in the `/roles_admin` collection, granting
+ *   elevated privileges for managing global data.
+ *
+ * ## Denormalization for Authorization
+ * To ensure fast and secure authorization, user-owned documents like Recordings
+ * and Orders contain a denormalized `userId` field. This allows rules to verify
+ * ownership by checking the document's data directly, avoiding slow and costly
+ * `get()` calls to parent documents.
+ *
+ * ## Structural Segregation
+ * User-generated content (Recordings) is stored in a private user subcollection,
+ * while public-facing content (Voices) is stored in a separate, top-level
+ * public collection. This separation is more secure and performant than using
+ * a single collection with a boolean flag for public/private status.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns true if the user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Returns true if the signed-in user's UID matches the provided userId.
+     * This is the foundation of the user-ownership model.
+     * @param userId The UID of the document owner.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Returns true if the signed-in user is an administrator.
+     * Admin status is granted by the existence of a document in the roles_admin collection.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Validates that the user is the owner and the document already exists.
+     * Used for safe update and delete operations.
+     * @param userId The UID of the document owner.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates relational integrity on document creation.
+     * Ensures the internal 'id' field matches the document's ID in the path.
+     * @param docId The ID of the document from the path.
+     */
+    function createsWithMatchingId(docId) {
+        return request.resource.data.id == docId;
+    }
+    
+    /**
+     * Validates relational integrity on user-owned subcollection document creation.
+     * Ensures the internal 'userId' field matches the user's ID from the path.
+     * @param userId The ID of the user from the path.
+     */
+    function createsWithMatchingUserId(userId) {
+      return request.resource.data.userId == userId;
+    }
+
+    /**
+     * Enforces immutability of the internal 'id' field on update.
+     * Prevents re-assigning the document's core identifier.
+     */
+    function idIsImmutable() {
+        return request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * Enforces immutability of the internal 'userId' ownership field on update.
+     * Prevents re-assigning ownership of a document.
+     */
+    function userIdIsImmutable() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+    
+    // -------------------------------------------------------------------------
+    // User Data Rules (/users)
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to user profile documents.
+     * @path /users/{userId}
+     * @allow A signed-in user (create) their own document: `auth.uid == 'user_abc'`, creating `/users/user_abc`.
+     * @deny An anonymous user (read) any user document.
+     * @deny A signed-in user (update) another user's document: `auth.uid == 'user_abc'`, updating `/users/user_xyz`.
+     * @principle Restricts access to a user's own data tree and allows self-creation of a profile.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Prevent browsing user directory
+      allow create: if isOwner(userId) && createsWithMatchingId(userId);
+      allow update: if isExistingOwner(userId) && idIsImmutable();
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Controls access to a user's voice recordings.
+       * @path /users/{userId}/recordings/{recordingId}
+       * @allow The owner (create) a new recording in their own subcollection.
+       * @deny Another user (read) a recording: `auth.uid == 'user_xyz'`, reading from `/users/user_abc/recordings/...`.
+       * @principle Enforces strict document ownership within a user's private subcollection.
+       */
+      match /recordings/{recordingId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && createsWithMatchingUserId(userId);
+        allow update: if isExistingOwner(userId) && userIdIsImmutable();
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Controls access to a user's purchase orders.
+       * @path /users/{userId}/orders/{orderId}
+       * @allow The owner (list) their own past orders.
+       * @deny Another user (delete) an order: `auth.uid == 'user_xyz'`, deleting from `/users/user_abc/orders/...`.
+       * @principle Enforces strict document ownership within a user's private subcollection.
+       */
+      match /orders/{orderId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && createsWithMatchingUserId(userId);
+        allow update: if isExistingOwner(userId) && userIdIsImmutable();
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Global Data Rules (/packages, /voices)
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to credit packages. Publicly readable, admin-only writes.
+     * @path /packages/{packageId}
+     * @allow Any user, including anonymous, (read) a package document to see its price.
+     * @deny A non-admin user (create) a new package.
+     * @principle Secures global, read-only data by restricting write access to administrators.
+     */
+    match /packages/{packageId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin() && createsWithMatchingId(packageId);
+      allow update: if isAdmin() && resource != null && idIsImmutable();
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Controls access to TTS voices. Publicly readable, admin-only writes.
+     * @path /voices/{voiceId}
+     * @allow Any user, including anonymous, (read) a voice document to see available options.
+     * @deny A non-admin user (update) a voice's description.
+     * @principle Secures global, read-only data by restricting write access to administrators.
+     */
+    match /voices/{voiceId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin() && createsWithMatchingId(voiceId);
+      allow update: if isAdmin() && resource != null && idIsImmutable();
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    // -------------------------------------------------------------------------
+    // Administrative Rules (/roles_admin)
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to the admin role collection. Only admins can manage other admins.
+     * @path /roles_admin/{userId}
+     * @allow An admin (create) a new document to grant another user admin privileges.
+     * @deny A regular user (read) this collection to see who the admins are.
+     * @deny A regular user (delete) an admin document to revoke privileges.
+     * @principle Protects the access control mechanism itself by restricting it to authorized administrators.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+  }
+}

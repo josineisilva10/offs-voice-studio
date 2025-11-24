@@ -1,0 +1,294 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the VozGenius application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "credits": {
+          "type": "number",
+          "description": "The number of credits the user has available."
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "createdAt",
+        "credits"
+      ]
+    },
+    "Voice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Voice",
+      "type": "object",
+      "description": "Represents a voice available for use in the text-to-speech generator.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the voice."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the voice."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the voice."
+        },
+        "language": {
+          "type": "string",
+          "description": "The language of the voice."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "language"
+      ]
+    },
+    "Recording": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recording",
+      "type": "object",
+      "description": "Represents a user-created voice recording.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the recording."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Recording)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the recording."
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL of the voice recording file.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the recording was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "fileUrl",
+        "createdAt"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents an order placed by a user for credits or other services.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Order)"
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "The date the order was placed.",
+          "format": "date-time"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total amount of the order."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the order (e.g., pending, completed, cancelled)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "orderDate",
+        "totalAmount",
+        "status"
+      ]
+    },
+    "Package": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Package",
+      "type": "object",
+      "description": "Represents a package of credits available for purchase.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the package."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the package."
+        },
+        "credits": {
+          "type": "number",
+          "description": "The number of credits included in the package."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the package."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the package."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "credits",
+        "price",
+        "description"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile data. Includes user's id, username, email, credits, and creation date.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/recordings/{recordingId}",
+        "definition": {
+          "entityName": "Recording",
+          "schema": {
+            "$ref": "#/backend/entities/Recording"
+          },
+          "description": "Stores voice recordings created by the user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who created the recording."
+            },
+            {
+              "name": "recordingId",
+              "description": "The unique identifier of the voice recording."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores orders placed by the user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who placed the order."
+            },
+            {
+              "name": "orderId",
+              "description": "The unique identifier of the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/packages/{packageId}",
+        "definition": {
+          "entityName": "Package",
+          "schema": {
+            "$ref": "#/backend/entities/Package"
+          },
+          "description": "Stores packages of credits available for purchase.",
+          "params": [
+            {
+              "name": "packageId",
+              "description": "The unique identifier of the package."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/voices/{voiceId}",
+        "definition": {
+          "entityName": "Voice",
+          "schema": {
+            "$ref": "#/backend/entities/Voice"
+          },
+          "description": "Stores voices available for text-to-speech generation.",
+          "params": [
+            {
+              "name": "voiceId",
+              "description": "The unique identifier of the voice."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection used to store admin UIDs. Existence of document grants admin role. Existence over Content.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the admin user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to reflect the core features of the VozGenius application, emphasizing user-generated content and transactional data, as well as user data. User data and recordings are stored under the `/users/{userId}` path to associate everything with a unique user. Packages and Voices are stored as root-level collections because they are global resources that do not belong to a specific user.\n\n**Authorization Independence:** User-owned data like Recordings and Orders are stored within user-specific subcollections.  This eliminates the need for `get()` calls in security rules to verify ownership.  The `userId` field within each Recording and Order document is used in conjunction with the path to determine access, guaranteeing authorization independence.\n\n**QAPs (Rules are not Filters):**  The segregation of user-specific data into subcollections directly addresses QAPs. List operations for Recordings and Orders can be secured by only allowing access to the requesting user's data. Global resources such as Voices and Packages can be secured with role-based access control if needed.\n\n**Global Roles (DBAC):**  To manage admin access, a dedicated collection `roles_admin` stores documents where the document ID represents the `uid` of an admin user.  The *existence* of a document in this collection grants admin privileges, avoiding reliance on custom claims or document content. This provides secure admin access.\n\n**Invariants:** The structure supports data integrity by placing related data (Recordings, Orders) within the user's scope, ensuring clear ownership. Timestamps (`createdAt`, `orderDate`) can be enforced through security rules, and denormalized data (such as the `userId` within Recordings and Orders) maintains consistency with the owning user."
+  }
+}
