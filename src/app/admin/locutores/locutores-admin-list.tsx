@@ -1,9 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 import type { VoiceActor } from '@/lib/data';
 import {
   Table,
@@ -18,22 +16,35 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Loader2, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc } from 'firebase/firestore';
 
-export function LocutoresAdminList() {
+
+type LocutoresAdminListProps = {
+  voiceActors: VoiceActor[];
+  isLoading: boolean;
+};
+
+export function LocutoresAdminList({ voiceActors, isLoading }: LocutoresAdminListProps) {
   const firestore = useFirestore();
-  const voiceActorsRef = useMemoFirebase(() => {
-      if (!firestore) return null;
-      return collection(firestore, 'voice_actors');
-  }, [firestore]);
-  const { data: voiceActors, isLoading } = useCollection<VoiceActor>(voiceActorsRef);
   const { toast } = useToast();
 
   const handleFieldChange = (actorId: string, field: keyof VoiceActor, value: any) => {
     if (!firestore) return;
+
+    // We can only edit actors that are in the database.
+    // Static actors are not editable through this interface.
+    if (actorId.includes('-static')) {
+        toast({
+            title: 'Locutor Estático',
+            description: 'Locutores da lista estática não podem ser editados aqui.',
+            variant: 'destructive',
+        });
+        return;
+    }
 
     const actorDocRef = doc(firestore, 'voice_actors', actorId);
     
@@ -41,7 +52,7 @@ export function LocutoresAdminList() {
 
     toast({
         title: 'Locutor Atualizado',
-        description: `O campo foi atualizado.`,
+        description: `O campo ${String(field)} foi atualizado.`,
     });
   };
 
@@ -53,7 +64,7 @@ export function LocutoresAdminList() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
+            {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 p-2">
                 <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="w-1/4">
@@ -109,12 +120,14 @@ export function LocutoresAdminList() {
                     defaultValue={actor.deliveryTimeMinutes}
                     onBlur={(e) => handleFieldChange(actor.id, 'deliveryTimeMinutes', Number(e.target.value))}
                     placeholder="Ex: 60"
+                    disabled={actor.id.includes('-static')}
                   />
                 </TableCell>
                 <TableCell>
                   <Select
                     defaultValue={actor.status}
                     onValueChange={(value) => handleFieldChange(actor.id, 'status', value)}
+                     disabled={actor.id.includes('-static')}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Definir status" />
