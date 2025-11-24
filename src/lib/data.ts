@@ -103,3 +103,4 @@ export const locutionStyles: LocutionStyle[] = [
     { id: 'jovem', name: 'Jovem' },
     { id: 'outros', name: 'Outros' },
 ];
+
