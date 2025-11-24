@@ -4,7 +4,7 @@
  * Core Philosophy:
  * This ruleset enforces a role-based access control model where "admins" have full
  * CRUD access to voice actors, demo types, and voice actor demos, while all users
- * can read this information.
+ * can read this information. An admin is identified by a custom claim `isAdmin` set to `true`.
  *
  * Data Structure:
  * The database consists of three main collections:
@@ -14,10 +14,8 @@
  *   the corresponding voice actor document.
  *
  * Key Security Decisions:
- * - All read operations are publicly accessible to all users, including unauthenticated users.
+ * - All read operations are publicly accessible to all authenticated users.
  * - All write operations (create, update, delete) are restricted to admins only.
- * - The rules explicitly deny any write operations for non-admins, ensuring that only
- *   authorized personnel can modify the data.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -26,40 +24,42 @@ service cloud.firestore {
     /**
      * @description Allows admins to manage voice actor profiles and users to read them.
      * @path /voice_actors/{voiceActorId}
-     * @allow (get, list): Any user can read voice actor profiles.
+     * @allow (get, list): Any authenticated user can read voice actor profiles.
      * @allow (create, update, delete): Only admins can create, update, or delete voice actor profiles.
-     * @deny (create, update, delete): Non-admins cannot create, update, or delete voice actor profiles.
-     * @principle Enforces role-based access control, allowing read access for all and write access for admins only.
      */
     match /voice_actors/{voiceActorId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     /**
      * @description Allows admins to manage demo types and users to read them.
      * @path /demo_types/{demoTypeId}
-     * @allow (get, list): Any user can read demo types.
+     * @allow (get, list): Any authenticated user can read demo types.
      * @allow (create, update, delete): Only admins can create, update, or delete demo types.
-     * @deny (create, update, delete): Non-admins cannot create, update, or delete demo types.
-     * @principle Enforces role-based access control, allowing read access for all and write access for admins only.
      */
     match /demo_types/{demoTypeId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     /**
      * @description Allows admins to manage voice actor demos and users to read them.
      * @path /voice_actors/{voiceActorId}/demos/{demoId}
-     * @allow (get, list): Any user can read voice actor demos.
+     * @allow (get, list): Any authenticated user can read voice actor demos.
      * @allow (create, update, delete): Only admins can create, update, or delete voice actor demos.
-     * @deny (create, update, delete): Non-admins cannot create, update, or delete voice actor demos.
-     * @principle Enforces role-based access control, allowing read access for all and write access for admins only.
      */
     match /voice_actors/{voiceActorId}/demos/{demoId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    /**
+     * @description User profiles are private, only the owner can read/write.
+     * @path /users/{userId}
+     */
+    match /users/{userId} {
+        allow read, write: if request.auth.uid == userId;
     }
 
     /**
@@ -71,13 +71,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Checks if the user is an admin.  This is a placeholder and should be
-     *              replaced with your actual admin check (e.g., a custom claim).
+     * @description Checks if the user is an admin by looking for a custom claim.
      * @return {bool} True if the user is an admin, false otherwise.
      */
     function isAdmin() {
-      // TODO: Replace with your actual admin check (e.g., a custom claim).
-      return false;
+      return request.auth.token.isAdmin == true;
     }
   }
 }

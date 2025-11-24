@@ -67,11 +67,29 @@
           "type": "string",
           "description": "URL to the image of the voice actor.",
           "format": "uri"
+        },
+        "deliveryTimeMinutes": {
+          "type": "number",
+          "description": "Estimated delivery time in minutes."
+        },
+        "status": {
+          "type": "string",
+          "description": "Availability status of the voice actor.",
+          "enum": [
+            "online",
+            "offline"
+          ]
+        },
+        "sampleAudioUrl": {
+          "type": "string",
+          "description": "URL to the sample audio of the voice actor.",
+          "format": "uri"
         }
       },
       "required": [
         "id",
-        "name"
+        "name",
+        "sampleAudioUrl"
       ]
     },
     "DemoType": {
