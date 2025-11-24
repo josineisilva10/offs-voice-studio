@@ -15,31 +15,30 @@ export default function AdminLocutoresPage() {
     () => (firestore ? collection(firestore, 'voice_actors') : null),
     [firestore]
   );
-  const { data: voiceActors, isLoading } = useCollection<VoiceActor>(voiceActorsRef);
+  const { data: voiceActorsFromDB, isLoading } = useCollection<VoiceActor>(voiceActorsRef);
 
   const combinedActors = useMemo(() => {
-    // Start with a copy of static actors
-    const allActors = [...staticVoiceActors];
-    const staticIds = new Set(allActors.map(v => v.id));
+    // Create a map of voice actors from the database for easy lookup.
+    const dbActorsMap = new Map(voiceActorsFromDB?.map(actor => [actor.id, actor]));
 
-    // Add actors from Firestore if they don't already exist in the static list
-    if (voiceActors) {
-      voiceActors.forEach(dbActor => {
-        if (!staticIds.has(dbActor.id)) {
-          allActors.push(dbActor);
-          staticIds.add(dbActor.id); // Also add to set to handle potential duplicates in db
-        } else {
-          // Optional: If you want DB data to override static data for the same ID
-          const index = allActors.findIndex(a => a.id === dbActor.id);
-          if (index !== -1) {
-            allActors[index] = { ...allActors[index], ...dbActor };
-          }
-        }
-      });
-    }
+    // Use staticVoiceActors as the base list and merge data from the database.
+    const mergedActors = staticVoiceActors.map(staticActor => {
+      const dbActor = dbActorsMap.get(staticActor.id);
+      if (dbActor) {
+        // If the actor exists in the DB, merge static data with DB data, prioritizing DB data.
+        // Also, remove it from the map so we don't add it again later.
+        dbActorsMap.delete(staticActor.id);
+        return { ...staticActor, ...dbActor };
+      }
+      return staticActor;
+    });
 
-    return allActors;
-  }, [voiceActors]);
+    // Add any remaining actors from the database that were not in the static list.
+    const remainingDbActors = Array.from(dbActorsMap.values());
+    
+    return [...mergedActors, ...remainingDbActors];
+    
+  }, [voiceActorsFromDB]);
 
 
   return (
