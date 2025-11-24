@@ -2,14 +2,13 @@
 
 import { PageHeader } from '@/components/page-header';
 import { VoiceList } from './voice-list';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { VoiceActor } from '@/lib/data';
-import { useMemo } from 'react';
 
 export default function VozesPage() {
   const firestore = useFirestore();
-  const voiceActorsRef = useMemo(() => collection(firestore, 'voice_actors'), [firestore]);
+  const voiceActorsRef = useMemoFirebase(() => collection(firestore, 'voice_actors'), [firestore]);
   const { data: voiceActors, isLoading } = useCollection<VoiceActor>(voiceActorsRef);
 
   return (
