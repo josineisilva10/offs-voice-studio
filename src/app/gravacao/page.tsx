@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { MainLayout } from '@/components/layout/main-layout';
@@ -36,9 +36,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Play, Upload, Mic as MicIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUser, useFirestore, useDoc } from '@/firebase';
+import { useUser, useFirestore, useDoc, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { staticVoiceActors, type VoiceActor } from '@/lib/data';
-import { doc, DocumentReference } from 'firebase/firestore';
+import { doc, DocumentReference, serverTimestamp, increment } from 'firebase/firestore';
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from 'next/navigation';
+import { type RecordingOrder } from '@/lib/types';
+
 
 const formSchema = z.object({
   title: z.string().min(1, { message: 'O título é obrigatório.' }),
@@ -63,6 +67,8 @@ interface UserProfile {
 export default function GravacaoPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const router = useRouter();
 
   const [estimatedSeconds, setEstimatedSeconds] = useState(0);
   const [requiredCredits, setRequiredCredits] = useState(0);
@@ -106,10 +112,56 @@ export default function GravacaoPage() {
     }
   }, [scriptText]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // TODO: Validar créditos do usuário e enviar pedido.
-    // Se faltar crédito, redirecionar para a página de compra.
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user || !userDocRef) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para fazer um pedido.' });
+      return;
+    }
+    
+    if (!hasSufficientCredits) {
+       toast({ variant: 'destructive', title: 'Créditos insuficientes', description: 'Você não tem créditos suficientes para esta gravação.' });
+       return;
+    }
+
+    try {
+      const selectedVoiceActor = voiceActors.find(actor => actor.id === values.voiceActorId);
+
+      const orderData: Omit<RecordingOrder, 'id'> = {
+        userId: user.uid,
+        title: values.title,
+        recordingType: values.recordingType,
+        recordingStyle: values.recordingStyle,
+        voiceActorId: values.voiceActorId,
+        voiceActorName: selectedVoiceActor?.name || 'N/A',
+        narrationStyle: values.narrationStyle === 'outros' ? values.otherNarrationStyle || 'Outros' : values.narrationStyle,
+        script: values.script,
+        usedCredits: requiredCredits,
+        status: 'Aguardando entrega',
+        createdAt: serverTimestamp(),
+      };
+
+      const ordersCollection = collection(firestore, 'users', user.uid, 'orders');
+      await addDocumentNonBlocking(ordersCollection, orderData);
+
+      await updateDocumentNonBlocking(userDocRef, {
+        credits: increment(-requiredCredits)
+      });
+      
+      toast({
+        title: 'Pedido criado com sucesso!',
+        description: `Sua gravação "${values.title}" foi enviada para produção.`,
+      });
+
+      router.push('/pedidos');
+
+    } catch (error) {
+      console.error("Erro ao criar o pedido:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Ops! Algo deu errado.',
+        description: 'Não foi possível criar seu pedido. Tente novamente.',
+      });
+    }
   }
   
   const narrationStyle = form.watch('narrationStyle');

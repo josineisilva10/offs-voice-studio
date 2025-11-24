@@ -48,6 +48,79 @@
         "createdAt",
         "credits"
       ]
+    },
+    "RecordingOrder": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recording Order",
+      "type": "object",
+      "description": "Represents a single recording order made by a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who created the order."
+        },
+        "title": {
+          "type": "string",
+          "description": "The user-defined title for the recording."
+        },
+        "recordingType": {
+          "type": "string",
+          "enum": ["off", "produzida"],
+          "description": "The type of recording requested."
+        },
+        "recordingStyle": {
+          "type": "string",
+          "description": "The style of the recording (e.g., Abertura, Comercial)."
+        },
+        "voiceActorId": {
+          "type": "string",
+          "description": "The ID of the chosen voice actor."
+        },
+        "voiceActorName": {
+          "type": "string",
+          "description": "The name of the chosen voice actor (denormalized)."
+        },
+        "narrationStyle": {
+          "type": "string",
+          "description": "The style of narration (e.g., Padrão, Impacto)."
+        },
+        "script": {
+          "type": "string",
+          "description": "The full text script to be recorded."
+        },
+        "usedCredits": {
+          "type": "number",
+          "description": "The number of credits spent on this order."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Aguardando entrega", "Em produção", "Concluído", "Entregue"],
+          "description": "The current status of the order."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp indicating when the order was created."
+        },
+        "finalAudioUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the final, delivered audio file."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "recordingType",
+        "recordingStyle",
+        "voiceActorId",
+        "voiceActorName",
+        "narrationStyle",
+        "script",
+        "usedCredits",
+        "status",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -71,7 +144,25 @@
               "description": "The unique identifier of the user, from Firebase Authentication."
             }
           ]
-        }
+        },
+        "subcollections": [
+          {
+            "path": "/orders/{orderId}",
+            "definition": {
+              "entityName": "RecordingOrder",
+              "schema": {
+                "$ref": "#/entities/RecordingOrder"
+              },
+              "description": "Stores a user's recording orders.",
+              "params": [
+                {
+                  "name": "orderId",
+                  "description": "The unique identifier for the order."
+                }
+              ]
+            }
+          }
+        ]
       }
     ]
   }
