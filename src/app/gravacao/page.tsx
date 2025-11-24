@@ -36,8 +36,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Play, Upload, Mic as MicIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUser, useFirestore } from '@/firebase';
-import { staticVoiceActors, type VoiceActor } from '@/lib/data'; // Importando dados estáticos
+import { useUser, useFirestore, useDoc } from '@/firebase';
+import { staticVoiceActors, type VoiceActor } from '@/lib/data';
+import { doc, DocumentReference } from 'firebase/firestore';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: 'O título é obrigatório.' }),
@@ -55,12 +56,29 @@ const formSchema = z.object({
 // Estimativa de palavras por segundo (ajuste conforme necessário)
 const WORDS_PER_SECOND = 2.5;
 
+interface UserProfile {
+  credits: number;
+}
+
 export default function GravacaoPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
   const [estimatedSeconds, setEstimatedSeconds] = useState(0);
   const [requiredCredits, setRequiredCredits] = useState(0);
+
+  const userDocRef = useMemo(() => {
+    if (user?.uid && firestore) {
+      return doc(firestore, 'users', user.uid) as DocumentReference<UserProfile>;
+    }
+    return undefined;
+  }, [user?.uid, firestore]);
+
+  const { data: userProfile, isLoading: isUserLoading } = useDoc<UserProfile>(userDocRef);
+  
+  const userCredits = useMemo(() => userProfile?.credits ?? 0, [userProfile]);
+  const hasSufficientCredits = useMemo(() => userCredits >= requiredCredits, [userCredits, requiredCredits]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,11 +94,10 @@ export default function GravacaoPage() {
 
   useEffect(() => {
     if (scriptText) {
-      const wordCount = scriptText.trim().split(/\s+/).length;
+      const wordCount = scriptText.trim().split(/\s+/).filter(Boolean).length;
       const seconds = Math.max(1, Math.ceil(wordCount / WORDS_PER_SECOND));
       setEstimatedSeconds(seconds);
       
-      // Regra: 40 segundos = 1 crédito, ceil
       const credits = Math.ceil(seconds / 40);
       setRequiredCredits(credits);
     } else {
@@ -375,10 +392,15 @@ export default function GravacaoPage() {
             <div className="flex justify-end items-center gap-4 p-4 bg-muted/40 rounded-lg">
                 <div className='text-right'>
                     <p className='font-bold text-lg'>Total: {requiredCredits} crédito(s)</p>
-                    <p className='text-sm text-muted-foreground'>Seu saldo: 0 créditos</p>
+                    <p className='text-sm text-muted-foreground'>Seu saldo: {isUserLoading ? '...' : userCredits} créditos</p>
+                     {!isUserLoading && !hasSufficientCredits && requiredCredits > 0 && (
+                        <p className='text-sm text-destructive font-semibold'>
+                            Saldo insuficiente.
+                        </p>
+                    )}
                 </div>
-              <Button type="submit" size="lg">
-                Gerar Gravação
+              <Button type="submit" size="lg" disabled={!hasSufficientCredits || requiredCredits === 0 || isUserLoading}>
+                {isUserLoading ? 'Carregando...' : 'Gerar Gravação'}
               </Button>
             </div>
           </form>
@@ -387,5 +409,3 @@ export default function GravacaoPage() {
     </MainLayout>
   );
 }
-
-    

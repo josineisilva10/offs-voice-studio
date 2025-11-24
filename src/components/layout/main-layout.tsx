@@ -38,9 +38,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { useAuth, useUser } from "@/firebase";
+import { useAuth, useUser, useDoc, useFirestore } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { AuthGuard } from "../auth/auth-guard";
+import { useMemo } from "react";
+import { doc, DocumentReference } from "firebase/firestore";
 
 const navLinks = [
     { href: "/dashboard", label: "Painel Principal", icon: Home },
@@ -51,11 +53,25 @@ const navLinks = [
     { href: "/creditos", label: "Crédito e pacote", icon: CreditCard },
 ];
 
+interface UserProfile {
+  credits: number;
+}
+
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
+
+  const userDocRef = useMemo(() => {
+    if (user?.uid && firestore) {
+      return doc(firestore, 'users', user.uid) as DocumentReference<UserProfile>;
+    }
+    return undefined;
+  }, [user?.uid, firestore]);
+
+  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
   const isAdmin = user?.email === 'JosineiSilva2.com';
 
@@ -121,7 +137,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                 <CardHeader className="p-2 pt-0 md:p-4">
                   <CardTitle>Seu Saldo</CardTitle>
                   <CardDescription>
-                    Você tem <strong>0 créditos</strong> disponíveis.
+                    Você tem <strong>{userProfile?.credits ?? 0} créditos</strong> disponíveis.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
