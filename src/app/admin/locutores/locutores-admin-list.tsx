@@ -21,31 +21,28 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export function LocutoresAdminList() {
   const firestore = useFirestore();
-  const voiceActorsRef = useMemoFirebase(() => collection(firestore, 'voice_actors'), [firestore]);
+  const voiceActorsRef = useMemoFirebase(() => {
+      if (!firestore) return null;
+      return collection(firestore, 'voice_actors');
+  }, [firestore]);
   const { data: voiceActors, isLoading } = useCollection<VoiceActor>(voiceActorsRef);
   const { toast } = useToast();
 
-  const handleFieldChange = async (actorId: string, field: keyof VoiceActor, value: any) => {
+  const handleFieldChange = (actorId: string, field: keyof VoiceActor, value: any) => {
     if (!firestore) return;
 
     const actorDocRef = doc(firestore, 'voice_actors', actorId);
-    try {
-      await setDoc(actorDocRef, { [field]: value }, { merge: true });
-      toast({
+    
+    setDocumentNonBlocking(actorDocRef, { [field]: value }, { merge: true });
+
+    toast({
         title: 'Locutor Atualizado',
-        description: `O campo ${String(field)} foi atualizado com sucesso.`,
-      });
-    } catch (error) {
-      console.error('Failed to update voice actor:', error);
-      toast({
-        title: 'Erro ao Atualizar',
-        description: 'Não foi possível salvar as alterações.',
-        variant: 'destructive',
-      });
-    }
+        description: `O campo foi atualizado.`,
+    });
   };
 
   if (isLoading) {
@@ -59,10 +56,18 @@ export function LocutoresAdminList() {
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 p-2">
                 <Skeleton className="h-12 w-12 rounded-full" />
-                <Skeleton className="h-6 w-1/4" />
-                <Skeleton className="h-10 w-1/4" />
-                <Skeleton className="h-10 w-1/4" />
-                <Skeleton className="h-10 w-24" />
+                <div className="w-1/4">
+                  <Skeleton className="h-6 w-3/4" />
+                </div>
+                <div className="w-1/4">
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="w-1/4">
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="w-24">
+                    <Skeleton className="h-10 w-full" />
+                </div>
               </div>
             ))}
           </div>
