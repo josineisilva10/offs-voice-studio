@@ -13,7 +13,9 @@ import {
   Voicemail,
   FileText,
   CreditCard,
+  Users,
 } from 'lucide-react';
+import { useUser } from '@/firebase/provider';
 
 const links = [
   { href: '/', label: 'Painel Principal', icon: LayoutDashboard },
@@ -24,8 +26,15 @@ const links = [
   { href: '/creditos', label: 'Créditos e Pacotes', icon: CreditCard },
 ];
 
+const adminLink = { href: '/admin/locutores', label: 'Admin Locutores', icon: Users };
+const ADMIN_EMAIL = 'josineisilva2@gmail.com';
+
+
 export function MainNav() {
   const pathname = usePathname();
+  const { user } = useUser();
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return (
     <SidebarMenu>
@@ -46,6 +55,20 @@ export function MainNav() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
+      {isAdmin && (
+         <SidebarMenuItem key={adminLink.href}>
+          <SidebarMenuButton
+            asChild
+            isActive={pathname.startsWith(adminLink.href)}
+            tooltip={adminLink.label}
+          >
+            <a href={adminLink.href}>
+              <adminLink.icon />
+              <span>{adminLink.label}</span>
+            </a>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )}
     </SidebarMenu>
   );
 }
