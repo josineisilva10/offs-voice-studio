@@ -1,3 +1,4 @@
+
 import { PageHeader } from '@/components/page-header';
 import {
   Card,
@@ -52,7 +53,7 @@ export default function PainelPrincipal() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,250</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
               créditos de voz
             </p>
@@ -66,9 +67,9 @@ export default function PainelPrincipal() {
             <ListOrdered className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+23</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
-              +12.1% em relação ao mês passado
+              nenhum pedido este mês
             </p>
           </CardContent>
         </Card>
@@ -80,7 +81,7 @@ export default function PainelPrincipal() {
             <Mic className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">57:32</div>
+            <div className="text-2xl font-bold">00:00</div>
             <p className="text-xs text-muted-foreground">
               neste ciclo de faturamento
             </p>
