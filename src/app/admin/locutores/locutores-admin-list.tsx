@@ -56,9 +56,8 @@ export function LocutoresAdminList({ voiceActors, isLoading }: LocutoresAdminLis
     });
   };
 
-  if (isLoading) {
-    return (
-      <Card>
+  const renderSkeleton = () => (
+     <Card>
         <CardHeader>
           <CardTitle>Carregando Locutores...</CardTitle>
         </CardHeader>
@@ -84,7 +83,10 @@ export function LocutoresAdminList({ voiceActors, isLoading }: LocutoresAdminLis
           </div>
         </CardContent>
       </Card>
-    );
+  );
+
+  if (isLoading) {
+    return renderSkeleton();
   }
 
   return (
