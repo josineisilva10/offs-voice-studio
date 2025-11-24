@@ -33,59 +33,72 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
-const formSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
   password: z
     .string()
-    .min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
+    .min(1, { message: 'Por favor, insira sua senha.' }),
 });
+
+const signupSchema = z.object({
+    firstName: z.string().min(1, { message: 'Por favor, insira seu nome.' }),
+    lastName: z.string().min(1, { message: 'Por favor, insira seu sobrenome.' }),
+    whatsapp: z.string().min(10, { message: 'Por favor, insira um número de WhatsApp válido.' }),
+    email: z.string().email({ message: 'Por favor, insira um email válido.' }),
+    password: z
+        .string()
+        .min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
+});
+
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
     },
   });
 
-  const handleAuth = async (
-    values: z.infer<typeof formSchema>,
-    isSignUp: boolean
-  ) => {
+  const signupForm = useForm<z.infer<typeof signupSchema>>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      whatsapp: '',
+      email: '',
+      password: '',
+    },
+  });
+
+  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     const auth = getAuth();
     try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, values.email, values.password);
-        toast({
-          title: 'Conta Criada!',
-          description: 'Sua conta foi criada com sucesso. Bem-vindo!',
-        });
-      } else {
         await signInWithEmailAndPassword(auth, values.email, values.password);
         toast({
           title: 'Login bem-sucedido!',
           description: 'Bem-vindo de volta!',
         });
-      }
-      router.push('/');
+        router.push('/');
     } catch (error: any) {
-      console.error('Authentication error:', error);
+      console.error('Login error:', error);
       let description = 'Ocorreu um erro. Tente novamente.';
-      if (error.code === 'auth/email-already-in-use') {
-        description = 'Este email já está em uso. Tente fazer login.';
-      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         description = 'Email ou senha inválidos. Verifique suas credenciais.';
       }
       toast({
-        title: isSignUp ? 'Erro ao Criar Conta' : 'Erro no Login',
+        title: 'Erro no Login',
         description,
         variant: 'destructive',
       });
@@ -93,6 +106,51 @@ export function AuthForm() {
       setIsLoading(false);
     }
   };
+  
+  const handleSignUp = async (values: z.infer<typeof signupSchema>) => {
+    setIsLoading(true);
+    const auth = getAuth();
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        const user = userCredential.user;
+        
+        // Update user profile with name
+        await updateProfile(user, {
+            displayName: `${values.firstName} ${values.lastName}`
+        });
+
+        // Save additional user info to Firestore
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await setDoc(userDocRef, {
+            uid: user.uid,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            whatsapp: values.whatsapp,
+            createdAt: new Date(),
+        });
+
+        toast({
+          title: 'Conta Criada!',
+          description: 'Sua conta foi criada com sucesso. Bem-vindo!',
+        });
+        router.push('/');
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      let description = 'Ocorreu um erro. Tente novamente.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'Este email já está em uso. Tente fazer login.';
+      }
+      toast({
+        title: 'Erro ao Criar Conta',
+        description,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   return (
     <div className="w-full max-w-md">
@@ -112,13 +170,13 @@ export function AuthForm() {
                 Acesse sua conta para continuar.
               </CardDescription>
             </CardHeader>
-            <Form {...form}>
+            <Form {...loginForm}>
               <form
-                onSubmit={form.handleSubmit((values) => handleAuth(values, false))}
+                onSubmit={loginForm.handleSubmit(handleLogin)}
               >
                 <CardContent className="space-y-4">
                   <FormField
-                    control={form.control}
+                    control={loginForm.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -135,7 +193,7 @@ export function AuthForm() {
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={loginForm.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -168,13 +226,63 @@ export function AuthForm() {
                 Crie uma nova conta para começar a usar o serviço.
               </CardDescription>
             </CardHeader>
-            <Form {...form}>
+            <Form {...signupForm}>
               <form
-                onSubmit={form.handleSubmit((values) => handleAuth(values, true))}
+                onSubmit={signupForm.handleSubmit(handleSignUp)}
               >
                 <CardContent className="space-y-4">
+                   <div className="grid grid-cols-2 gap-4">
+                     <FormField
+                        control={signupForm.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Seu nome"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={signupForm.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sobrenome</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Seu sobrenome"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                   </div>
+                   <FormField
+                    control={signupForm.control}
+                    name="whatsapp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>WhatsApp</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="(xx) xxxxx-xxxx"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
-                    control={form.control}
+                    control={signupForm.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -191,7 +299,7 @@ export function AuthForm() {
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={signupForm.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
