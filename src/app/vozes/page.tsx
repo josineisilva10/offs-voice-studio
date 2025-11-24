@@ -14,22 +14,32 @@ export default function VozesPage() {
     () => (firestore ? collection(firestore, 'voice_actors') : null),
     [firestore]
   );
-  const { data: voiceActors, isLoading } = useCollection<VoiceActor>(voiceActorsRef);
+  const { data: voiceActorsFromDB, isLoading } = useCollection<VoiceActor>(voiceActorsRef);
 
   const combinedVoices = useMemo(() => {
-    const allVoices = [...staticVoiceActors];
-    const staticIds = new Set(staticVoiceActors.map(v => v.id));
-    
-    if (voiceActors) {
-      voiceActors.forEach(dbVoice => {
-        if (!staticIds.has(dbVoice.id)) {
-          allVoices.push(dbVoice);
-        }
-      });
+    if (isLoading) {
+      return [];
     }
 
-    return allVoices;
-  }, [voiceActors]);
+    const dbActorsMap = new Map(voiceActorsFromDB?.map(actor => [actor.id, actor]));
+
+    const mergedActors = staticVoiceActors.map(staticActor => {
+      const dbActor = dbActorsMap.get(staticActor.id);
+      if (dbActor) {
+        // an entry for this static actor exists in the db, so remove it from the map
+        dbActorsMap.delete(staticActor.id);
+        // and return a merged object, with db values taking precedence
+        return { ...staticActor, ...dbActor };
+      }
+      // otherwise, just return the static actor
+      return staticActor;
+    });
+
+    const remainingDbActors = Array.from(dbActorsMap.values());
+    
+    return [...mergedActors, ...remainingDbActors];
+    
+  }, [voiceActorsFromDB, isLoading]);
 
   return (
     <div className="flex flex-col gap-6">
