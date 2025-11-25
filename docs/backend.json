@@ -201,22 +201,36 @@
         },
         "subcollections": [
           {
-            "path": "/orders/{orderId}",
+            "path": "/recordings/{recordingId}",
             "definition": {
-              "entityName": "RecordingOrder",
+              "entityName": "Recording",
               "schema": {
                 "$ref": "#/entities/RecordingOrder"
               },
-              "description": "Stores a user's recording orders.",
+              "description": "Stores a user's voice recordings (deprecated, use all-orders).",
               "params": [
                 {
-                  "name": "orderId",
-                  "description": "The unique identifier for the order."
+                  "name": "recordingId",
+                  "description": "The unique identifier for the recording."
                 }
               ]
             }
           }
         ]
+      },
+       {
+        "path": "/all-orders/{orderId}",
+        "definition": {
+          "entityName": "RecordingOrder",
+          "schema": { "$ref": "#/entities/RecordingOrder" },
+          "description": "Centralized collection for all user recording orders.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "The unique identifier for the order."
+            }
+          ]
+        }
       },
       {
         "path": "/voices/{voiceId}",

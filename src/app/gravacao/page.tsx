@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -38,7 +39,7 @@ import { Play, Upload, Mic as MicIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { staticVoiceActors, type VoiceActor } from '@/lib/data';
-import { doc, DocumentReference, serverTimestamp, increment } from 'firebase/firestore';
+import { doc, DocumentReference, serverTimestamp, increment, collection } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import { type RecordingOrder } from '@/lib/types';
@@ -72,6 +73,7 @@ export default function GravacaoPage() {
 
   const [estimatedSeconds, setEstimatedSeconds] = useState(0);
   const [requiredCredits, setRequiredCredits] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const userDocRef = useMemo(() => {
     if (user?.uid && firestore) {
@@ -113,7 +115,7 @@ export default function GravacaoPage() {
   }, [scriptText]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !userDocRef) {
+    if (!user || !userDocRef || !firestore) {
       toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para fazer um pedido.' });
       return;
     }
@@ -122,6 +124,8 @@ export default function GravacaoPage() {
        toast({ variant: 'destructive', title: 'Créditos insuficientes', description: 'Você não tem créditos suficientes para esta gravação.' });
        return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const selectedVoiceActor = voiceActors.find(actor => actor.id === values.voiceActorId);
@@ -140,7 +144,7 @@ export default function GravacaoPage() {
         createdAt: serverTimestamp(),
       };
 
-      const ordersCollection = collection(firestore, 'users', user.uid, 'orders');
+      const ordersCollection = collection(firestore, 'all-orders');
       await addDocumentNonBlocking(ordersCollection, orderData);
 
       await updateDocumentNonBlocking(userDocRef, {
@@ -161,6 +165,8 @@ export default function GravacaoPage() {
         title: 'Ops! Algo deu errado.',
         description: 'Não foi possível criar seu pedido. Tente novamente.',
       });
+    } finally {
+        setIsSubmitting(false);
     }
   }
   
@@ -451,8 +457,8 @@ export default function GravacaoPage() {
                         </p>
                     )}
                 </div>
-              <Button type="submit" size="lg" disabled={!hasSufficientCredits || requiredCredits === 0 || isUserLoading}>
-                {isUserLoading ? 'Carregando...' : 'Gerar Gravação'}
+              <Button type="submit" size="lg" disabled={!hasSufficientCredits || requiredCredits === 0 || isUserLoading || isSubmitting}>
+                {isSubmitting ? 'Enviando Pedido...' : isUserLoading ? 'Carregando...' : 'Gerar Gravação'}
               </Button>
             </div>
           </form>

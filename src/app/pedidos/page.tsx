@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useMemo } from 'react';
-import { collection, query, orderBy, CollectionReference } from 'firebase/firestore';
+import { collection, query, where, orderBy, CollectionReference } from 'firebase/firestore';
 import { useCollection, useFirestore, useUser } from '@/firebase';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { ptBR } from 'date-fns/locale';
 function getStatusVariant(status: string) {
   switch (status) {
     case 'Concluído':
+    case 'Entregue':
       return 'default';
     case 'Em produção':
       return 'secondary';
@@ -30,8 +32,9 @@ export default function PedidosPage() {
 
   const ordersQuery = useMemo(() => {
     if (user?.uid && firestore) {
-      const ordersRef = collection(firestore, 'users', user.uid, 'orders') as CollectionReference<RecordingOrder>;
-      return query(ordersRef, orderBy('createdAt', 'desc'));
+      const ordersRef = collection(firestore, 'all-orders') as CollectionReference<RecordingOrder>;
+      // Query for orders where the userId matches the current user's UID
+      return query(ordersRef, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
     }
     return undefined;
   }, [user?.uid, firestore]);
@@ -51,7 +54,7 @@ export default function PedidosPage() {
         {isLoading && <p>Carregando pedidos...</p>}
 
         {!isLoading && !orders?.length && (
-          <div className="text-center py-12">
+          <div className="text-center py-12 border-2 border-dashed rounded-lg">
             <p className="text-muted-foreground">Você ainda não fez nenhum pedido.</p>
           </div>
         )}
