@@ -73,7 +73,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
-  const isAdmin = user?.email === 'JosineiSilva2.com';
+  const isAdmin = user?.email === 'josineisilva2@gmail.com';
 
   const handleSignOut = async () => {
     try {
