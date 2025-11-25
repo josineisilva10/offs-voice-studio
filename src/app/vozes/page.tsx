@@ -47,7 +47,7 @@ export default function VozesPage() {
         <div>
           <h1 className="text-3xl font-bold">Lista de Vozes</h1>
           <p className="text-muted-foreground">
-            Explore nossos locutores e vozes de IA. Ouça as demonstrações e escolha a ideal para o seu projeto.
+            Explore nossos locutores. Ouça as demonstrações e escolha a ideal para o seu projeto.
           </p>
         </div>
 
