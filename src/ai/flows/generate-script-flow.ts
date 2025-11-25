@@ -34,7 +34,7 @@ const generateScriptFlow = ai.defineFlow(
       A resposta deve conter apenas o texto do roteiro, sem nenhum comentário ou formatação adicional.`,
       model: 'googleai/gemini-1.5-flash-latest',
       output: {
-        format: 'text'
+        format: 'text',
       },
       config: {
         temperature: 0.8,
