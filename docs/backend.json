@@ -121,6 +121,60 @@
         "status",
         "createdAt"
       ]
+    },
+    "Voice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Voice",
+      "type": "object",
+      "description": "Represents a voice actor or an AI voice available in the marketplace.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the voice."
+        },
+        "name": {
+          "type": "string",
+          "description": "The display name of the voice actor or AI."
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for the voice's avatar image."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Descriptive tags for the voice style (e.g., 'impacto', 'jovem')."
+        },
+        "demoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the audio demo file."
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["male", "female", "other"],
+          "description": "The gender of the voice."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["online", "offline"],
+          "description": "Availability status of the voice actor.",
+          "default": "online"
+        },
+        "deliveryTime": {
+          "type": "number",
+          "description": "Estimated delivery time in minutes.",
+          "default": 60
+        },
+        "isStatic": {
+          "type": "boolean",
+          "description": "Flag to identify if the voice is from the static list or from the database."
+        }
+      },
+      "required": ["id", "name", "tags", "demoUrl", "gender"]
     }
   },
   "auth": {
@@ -163,6 +217,20 @@
             }
           }
         ]
+      },
+      {
+        "path": "/voices/{voiceId}",
+        "definition": {
+          "entityName": "Voice",
+          "schema": { "$ref": "#/entities/Voice" },
+          "description": "Stores all available voices, both human and AI.",
+          "params": [
+            {
+              "name": "voiceId",
+              "description": "The unique identifier for the voice."
+            }
+          ]
+        }
       }
     ]
   }
