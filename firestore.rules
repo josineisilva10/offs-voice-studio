@@ -81,7 +81,8 @@ service cloud.firestore {
       // Admins can list all users to find them by email.
       allow list: if isAdmin();
       allow create: if isOwner(userId) && createsWithMatchingId(userId);
-      allow update: if isOwner(userId) && idIsImmutable();
+      // Admins and owners can update user profiles.
+      allow update: if isOwner(userId) || isAdmin();
       allow delete: if isOwner(userId);
     }
     
