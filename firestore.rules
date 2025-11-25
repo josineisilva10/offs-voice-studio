@@ -15,8 +15,6 @@
  *   is controlled by a `userId` field within each document.
  * - `/packages/{packageId}`: Top-level collection for publicly viewable credit packages.
  * - `/voices/{voiceId}`: Top-level collection for publicly available text-to-speech voices.
- * - `/roles_admin/{userId}`: A dedicated collection where the existence of a document
- *   identifies a user as an administrator.
  *
  * ## Key Security Decisions
  * - **Strict User Scoping**: All data within the `/users/{userId}` path is strictly
@@ -26,9 +24,8 @@
  * - **Public Read-Only Data**: Collections like `/packages` and `/voices` are
  *   publicly readable by any client, but all write operations are restricted
  *   to administrators.
- * - **Role-Based Access Control (RBAC)**: An `isAdmin()` function checks for the
- *   existence of the user's UID in the `/roles_admin` collection, granting
- *   elevated privileges.
+ * - **Role-Based Access Control (RBAC)**: An `isAdmin()` function checks the
+ *   authenticated user's email, granting elevated privileges.
  *
  * ## Denormalization for Authorization
  * To ensure fast and secure authorization, user-owned documents like Recording
@@ -52,7 +49,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && request.auth.token.email == 'josineisilva2@gmail.com';
     }
     
     function isDocumentOwner(doc) {
@@ -95,9 +92,11 @@ service cloud.firestore {
         // Users can create their own orders.
         allow create: if isSignedIn() && createsWithMatchingUserId(request.auth.uid);
         
-        // Users can read/list their own orders. Admins can read/list all orders.
+        // Users can read their own orders. Admins can read all orders.
         allow get: if (isDocumentOwner(resource.data) || isAdmin());
-        allow list: if (isAdmin());
+        
+        // Only admins can list all orders. Users can't list from this global collection.
+        allow list: if isAdmin();
         
         // Users can update status on their own orders if they are the owner.
         // Admins can update any field on any order.
@@ -124,18 +123,6 @@ service cloud.firestore {
       allow list: if true;
       allow create: if isAdmin() && createsWithMatchingId(voiceId);
       allow update: if isAdmin() && resource != null && idIsImmutable();
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    // -------------------------------------------------------------------------
-    // Administrative Rules (/roles_admin)
-    // -------------------------------------------------------------------------
-
-    match /roles_admin/{userId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
       allow delete: if isAdmin() && resource != null;
     }
   }
