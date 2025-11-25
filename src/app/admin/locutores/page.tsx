@@ -13,6 +13,8 @@ import {
   DocumentReference,
   increment,
   updateDoc,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import { type RecordingOrder } from '@/lib/types';
 import {
@@ -77,7 +79,7 @@ export default function AdminLocutoresPage() {
   const [selectedOrder, setSelectedOrder] = useState<RecordingOrder | null>(null);
 
   // State for credit management
-  const [targetUserId, setTargetUserId] = useState('');
+  const [targetUserIdentifier, setTargetUserIdentifier] = useState('');
   const [creditsToAdd, setCreditsToAdd] = useState(0);
   const [isAddingCredits, setIsAddingCredits] = useState(false);
 
@@ -104,7 +106,7 @@ export default function AdminLocutoresPage() {
     setUpdatingStatus((prev) => ({ ...prev, [orderId]: true }));
     try {
       const orderDocRef = doc(firestore, 'all-orders', orderId) as DocumentReference<RecordingOrder>;
-      await updateDocumentNonBlocking(orderDocRef, { status: newStatus });
+      await updateDoc(orderDocRef, { status: newStatus });
       toast({
         title: 'Sucesso!',
         description: `Status do pedido atualizado para "${newStatus}".`,
@@ -122,32 +124,65 @@ export default function AdminLocutoresPage() {
   };
 
   const handleAddCredits = async () => {
-    if (!targetUserId || creditsToAdd <= 0 || !firestore) {
+    if (!targetUserIdentifier || creditsToAdd <= 0 || !firestore) {
         toast({
             variant: 'destructive',
             title: 'Erro',
-            description: 'Por favor, insira um ID de usuário válido e uma quantidade de créditos maior que zero.',
+            description: 'Por favor, insira um ID de usuário ou e-mail válido e uma quantidade de créditos maior que zero.',
         });
         return;
     }
     setIsAddingCredits(true);
+
+    let userId: string | null = null;
+    let usedIdentifier = targetUserIdentifier;
+
     try {
-        const userDocRef = doc(firestore, 'users', targetUserId);
-        await updateDoc(userDocRef, {
-            credits: increment(creditsToAdd)
-        });
-        toast({
-            title: 'Sucesso!',
-            description: `${creditsToAdd} créditos foram adicionados ao usuário ${targetUserId}.`,
-        });
-        setTargetUserId('');
-        setCreditsToAdd(0);
+        // Check if the identifier is an email
+        if (targetUserIdentifier.includes('@')) {
+            const usersRef = collection(firestore, 'users');
+            const q = query(usersRef, where('email', '==', targetUserIdentifier));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                // Found user by email
+                const userDoc = querySnapshot.docs[0];
+                userId = userDoc.id;
+            } else {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Erro',
+                    description: 'Nenhum usuário encontrado com este e-mail.',
+                });
+                setIsAddingCredits(false);
+                return;
+            }
+        } else {
+            // Assume it's a user ID
+            userId = targetUserIdentifier;
+        }
+
+        if (userId) {
+            const userDocRef = doc(firestore, 'users', userId);
+            await updateDoc(userDocRef, {
+                credits: increment(creditsToAdd)
+            });
+            toast({
+                title: 'Sucesso!',
+                description: `${creditsToAdd} créditos foram adicionados ao usuário ${usedIdentifier}.`,
+            });
+            setTargetUserIdentifier('');
+            setCreditsToAdd(0);
+        } else {
+             throw new Error('ID do usuário não foi encontrado ou determinado.');
+        }
+
     } catch (error) {
         console.error('Erro ao adicionar créditos:', error);
         toast({
             variant: 'destructive',
             title: 'Erro',
-            description: 'Não foi possível adicionar os créditos. Verifique o ID do usuário e tente novamente.',
+            description: 'Não foi possível adicionar os créditos. Verifique o ID/e-mail do usuário e tente novamente.',
         });
     } finally {
         setIsAddingCredits(false);
@@ -168,17 +203,17 @@ export default function AdminLocutoresPage() {
             <CardHeader>
                 <CardTitle>Gerenciamento de Créditos</CardTitle>
                 <CardDescription>
-                    Adicione créditos a uma conta de usuário específica.
+                    Adicione créditos a uma conta de usuário específica usando o ID ou o e-mail do usuário.
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-end gap-4">
                 <div className="grid w-full sm:w-auto sm:flex-1 gap-2">
-                    <Label htmlFor="userId">ID do Usuário</Label>
+                    <Label htmlFor="userId">ID ou E-mail do Usuário</Label>
                     <Input 
                         id="userId" 
-                        placeholder="Insira o ID do usuário do Firebase"
-                        value={targetUserId}
-                        onChange={(e) => setTargetUserId(e.target.value)}
+                        placeholder="Insira o ID ou E-mail do usuário"
+                        value={targetUserIdentifier}
+                        onChange={(e) => setTargetUserIdentifier(e.target.value)}
                     />
                 </div>
                  <div className="grid w-full sm:w-[150px] gap-2">
@@ -318,4 +353,3 @@ export default function AdminLocutoresPage() {
     </MainLayout>
   );
 
-    
