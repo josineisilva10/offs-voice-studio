@@ -121,7 +121,7 @@ export default function GravacaoPage() {
     }
     
     if (!hasSufficientCredits) {
-       toast({ variant: 'destructive', title: 'Créditos insuficientes', description: 'Você não tem créditos suficientes para esta gravação.' });
+       toast({ variant: 'destructive', title: 'Créditos insuficientes', description: 'Saldo insuficiente — compre créditos para gerar esta gravação.' });
        return;
     }
 
@@ -458,7 +458,7 @@ export default function GravacaoPage() {
                     )}
                 </div>
               <Button type="submit" size="lg" disabled={!hasSufficientCredits || requiredCredits === 0 || isUserLoading || isSubmitting}>
-                {isSubmitting ? 'Enviando Pedido...' : isUserLoading ? 'Carregando...' : 'Gerar Gravação'}
+                {isSubmitting ? 'Enviando Pedido...' : isUserLoading ? 'Carregando...' : `Gerar gravação (usar ${requiredCredits} créditos)`}
               </Button>
             </div>
           </form>
