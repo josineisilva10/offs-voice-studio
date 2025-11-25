@@ -19,8 +19,8 @@
  * ## Key Security Decisions
  * - **Strict User Scoping**: All data within the `/users/{userId}` path is strictly
  *   limited to the authenticated owner of that data tree.
- * - **No User Listing**: Listing documents in the top-level `/users` collection is
- *   explicitly disabled to protect user privacy.
+ * - **Admin User Listing**: Listing documents in the top-level `/users` collection is
+ *   only allowed for admins to enable features like adding credits by email.
  * - **Public Read-Only Data**: Collections like `/packages` and `/voices` are
  *   publicly readable by any client, but all write operations are restricted
  *   to administrators.
@@ -78,6 +78,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
+      // Admins can list all users to find them by email.
       allow list: if isAdmin();
       allow create: if isOwner(userId) && createsWithMatchingId(userId);
       allow update: if isOwner(userId) && idIsImmutable();
