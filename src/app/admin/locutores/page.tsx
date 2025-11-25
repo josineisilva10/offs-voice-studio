@@ -11,6 +11,8 @@ import {
   doc,
   CollectionReference,
   DocumentReference,
+  increment,
+  updateDoc,
 } from 'firebase/firestore';
 import { type RecordingOrder } from '@/lib/types';
 import {
@@ -21,8 +23,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -65,6 +76,12 @@ export default function AdminLocutoresPage() {
   const [orderStatus, setOrderStatus] = useState<Record<string, string>>({});
   const [selectedOrder, setSelectedOrder] = useState<RecordingOrder | null>(null);
 
+  // State for credit management
+  const [targetUserId, setTargetUserId] = useState('');
+  const [creditsToAdd, setCreditsToAdd] = useState(0);
+  const [isAddingCredits, setIsAddingCredits] = useState(false);
+
+
   const allOrdersQuery = useMemo(() => {
     if (firestore) {
       const ordersRef = collection(
@@ -104,89 +121,163 @@ export default function AdminLocutoresPage() {
     }
   };
 
+  const handleAddCredits = async () => {
+    if (!targetUserId || creditsToAdd <= 0 || !firestore) {
+        toast({
+            variant: 'destructive',
+            title: 'Erro',
+            description: 'Por favor, insira um ID de usuário válido e uma quantidade de créditos maior que zero.',
+        });
+        return;
+    }
+    setIsAddingCredits(true);
+    try {
+        const userDocRef = doc(firestore, 'users', targetUserId);
+        await updateDoc(userDocRef, {
+            credits: increment(creditsToAdd)
+        });
+        toast({
+            title: 'Sucesso!',
+            description: `${creditsToAdd} créditos foram adicionados ao usuário ${targetUserId}.`,
+        });
+        setTargetUserId('');
+        setCreditsToAdd(0);
+    } catch (error) {
+        console.error('Erro ao adicionar créditos:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Erro',
+            description: 'Não foi possível adicionar os créditos. Verifique o ID do usuário e tente novamente.',
+        });
+    } finally {
+        setIsAddingCredits(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-bold">Gerenciamento de Pedidos e Locutores</h1>
+          <h1 className="text-2xl font-bold">Painel de Administração</h1>
           <p className="text-muted-foreground">
-            Visualize e gerencie todos os pedidos de gravação da plataforma.
+            Gerencie pedidos, locutores e créditos da plataforma.
           </p>
         </div>
 
-        {isLoading ? (
-          <p>Carregando pedidos...</p>
-        ) : !orders || orders.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed rounded-lg">
-            <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
-          </div>
-        ) : (
-          <div className="border rounded-lg w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Locutor</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status Atual</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.title}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{order.userId}</TableCell>
-                    <TableCell>{order.voiceActorName}</TableCell>
-                    <TableCell>
-                      {order.createdAt
-                        ? format(
-                            new Date(order.createdAt.seconds * 1000),
-                            'dd/MM/yy HH:mm',
-                            { locale: ptBR }
-                          )
-                        : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(order.status)}>
-                        {order.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="flex items-center gap-2">
-                       <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
-                          Ver Texto
-                       </Button>
-                       <Select
-                         defaultValue={order.status}
-                         onValueChange={(value) =>
-                           setOrderStatus((prev) => ({ ...prev, [order.id]: value }))
-                         }
-                       >
-                         <SelectTrigger className="w-[180px] h-9">
-                           <SelectValue placeholder="Mudar status" />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="Aguardando entrega">Aguardando</SelectItem>
-                           <SelectItem value="Em produção">Em produção</SelectItem>
-                           <SelectItem value="Concluído">Concluído</SelectItem>
-                           <SelectItem value="Entregue">Entregue</SelectItem>
-                         </SelectContent>
-                       </Select>
-                       <Button
-                         size="sm"
-                         onClick={() => handleStatusUpdate(order.id)}
-                         disabled={updatingStatus[order.id] || !orderStatus[order.id]}
-                       >
-                         {updatingStatus[order.id] ? 'Salvando...' : 'Salvar'}
-                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <Card>
+            <CardHeader>
+                <CardTitle>Gerenciamento de Créditos</CardTitle>
+                <CardDescription>
+                    Adicione créditos a uma conta de usuário específica.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row items-end gap-4">
+                <div className="grid w-full sm:w-auto sm:flex-1 gap-2">
+                    <Label htmlFor="userId">ID do Usuário</Label>
+                    <Input 
+                        id="userId" 
+                        placeholder="Insira o ID do usuário do Firebase"
+                        value={targetUserId}
+                        onChange={(e) => setTargetUserId(e.target.value)}
+                    />
+                </div>
+                 <div className="grid w-full sm:w-[150px] gap-2">
+                    <Label htmlFor="credits">Qtd. de Créditos</Label>
+                    <Input 
+                        id="credits" 
+                        type="number" 
+                        placeholder="0"
+                        value={creditsToAdd}
+                        onChange={(e) => setCreditsToAdd(Number(e.target.value))}
+                    />
+                </div>
+                <Button onClick={handleAddCredits} disabled={isAddingCredits} className="w-full sm:w-auto">
+                    {isAddingCredits ? 'Adicionando...' : 'Adicionar Créditos'}
+                </Button>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                 <CardTitle>Gerenciamento de Pedidos</CardTitle>
+                 <CardDescription>Visualize e gerencie todos os pedidos de gravação.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                <p>Carregando pedidos...</p>
+                ) : !orders || orders.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
+                </div>
+                ) : (
+                <div className="border rounded-lg w-full">
+                    <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>Título</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Locutor</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Status Atual</TableHead>
+                        <TableHead>Ações</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {orders.map((order) => (
+                        <TableRow key={order.id}>
+                            <TableCell className="font-medium">{order.title}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{order.userId}</TableCell>
+                            <TableCell>{order.voiceActorName}</TableCell>
+                            <TableCell>
+                            {order.createdAt
+                                ? format(
+                                    new Date(order.createdAt.seconds * 1000),
+                                    'dd/MM/yy HH:mm',
+                                    { locale: ptBR }
+                                )
+                                : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                            <Badge variant={getStatusVariant(order.status)}>
+                                {order.status}
+                            </Badge>
+                            </TableCell>
+                            <TableCell className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
+                                Ver Texto
+                            </Button>
+                            <Select
+                                defaultValue={order.status}
+                                onValueChange={(value) =>
+                                setOrderStatus((prev) => ({ ...prev, [order.id]: value }))
+                                }
+                            >
+                                <SelectTrigger className="w-[180px] h-9">
+                                <SelectValue placeholder="Mudar status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                <SelectItem value="Aguardando entrega">Aguardando</SelectItem>
+                                <SelectItem value="Em produção">Em produção</SelectItem>
+                                <SelectItem value="Concluído">Concluído</SelectItem>
+                                <SelectItem value="Entregue">Entregue</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                size="sm"
+                                onClick={() => handleStatusUpdate(order.id)}
+                                disabled={updatingStatus[order.id] || !orderStatus[order.id]}
+                            >
+                                {updatingStatus[order.id] ? 'Salvando...' : 'Salvar'}
+                            </Button>
+                            </TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                    </Table>
+                </div>
+                )}
+            </CardContent>
+        </Card>
       </div>
 
        {selectedOrder && (
@@ -226,4 +317,5 @@ export default function AdminLocutoresPage() {
       )}
     </MainLayout>
   );
-}
+
+    
