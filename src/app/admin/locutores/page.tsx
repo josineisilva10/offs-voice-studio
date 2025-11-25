@@ -30,9 +30,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Textarea } from '@/components/ui/textarea';
 
 function getStatusVariant(status: string) {
   switch (status) {
@@ -52,6 +62,8 @@ export default function AdminLocutoresPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
+  const [orderStatus, setOrderStatus] = useState<Record<string, string>>({});
+  const [selectedOrder, setSelectedOrder] = useState<RecordingOrder | null>(null);
 
   const allOrdersQuery = useMemo(() => {
     if (firestore) {
@@ -67,7 +79,6 @@ export default function AdminLocutoresPage() {
   const { data: orders, isLoading } =
     useCollection<RecordingOrder>(allOrdersQuery);
 
-  const [orderStatus, setOrderStatus] = useState<Record<string, string>>({});
 
   const handleStatusUpdate = async (orderId: string) => {
     const newStatus = orderStatus[orderId];
@@ -143,7 +154,7 @@ export default function AdminLocutoresPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="flex items-center gap-2">
-                       <Button variant="outline" size="sm">
+                       <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
                           Ver Texto
                        </Button>
                        <Select
@@ -177,6 +188,42 @@ export default function AdminLocutoresPage() {
           </div>
         )}
       </div>
+
+       {selectedOrder && (
+        <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+          <DialogContent className="sm:max-w-[625px]">
+            <DialogHeader>
+              <DialogTitle>Detalhes do Pedido: {selectedOrder.title}</DialogTitle>
+              <DialogDescription>
+                Revise o texto e as especificações do cliente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="flex flex-col gap-2">
+                <h4 className="font-semibold">Roteiro para Gravação</h4>
+                 <Textarea
+                    readOnly
+                    value={selectedOrder.script}
+                    className="min-h-[250px] text-base bg-muted/50"
+                  />
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <p><span className='font-semibold text-muted-foreground'>Tipo:</span> {selectedOrder.recordingType === 'off' ? 'Off (só voz)' : 'Produzida'}</p>
+                <p><span className='font-semibold text-muted-foreground'>Estilo:</span> {selectedOrder.recordingStyle}</p>
+                <p><span className='font-semibold text-muted-foreground'>Locução:</span> {selectedOrder.narrationStyle}</p>
+                <p><span className='font-semibold text-muted-foreground'>Locutor:</span> {selectedOrder.voiceActorName}</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  Fechar
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </MainLayout>
   );
 }
