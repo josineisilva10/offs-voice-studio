@@ -23,7 +23,7 @@ export async function signUpWithEmail(
         whatsappName,
         email: user.email,
         createdAt: serverTimestamp(),
-        credits: 10,
+        credits: 0,
     };
     
     await setDoc(doc(firestore, "users", user.uid), userProfile);
