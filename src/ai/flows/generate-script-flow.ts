@@ -3,23 +3,15 @@
  * @fileOverview Flow para gerar roteiros de locução com IA.
  *
  * - generateScript - Função que lida com a geração do roteiro.
- * - GenerateScriptInputSchema - O tipo de entrada para a função.
- * - GenerateScriptOutputSchema - O tipo de retorno para a função.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-
-export const GenerateScriptInputSchema = z.object({
-  prompt: z.string().describe('As informações fornecidas pelo usuário para guiar a geração do texto.'),
-});
-export type GenerateScriptInput = z.infer<typeof GenerateScriptInputSchema>;
-
-export const GenerateScriptOutputSchema = z.object({
-  script: z.string().describe('O roteiro gerado pela IA.'),
-});
-export type GenerateScriptOutput = z.infer<typeof GenerateScriptOutputSchema>;
-
+import { 
+  GenerateScriptInputSchema,
+  type GenerateScriptInput, 
+  GenerateScriptOutputSchema,
+  type GenerateScriptOutput,
+} from './schemas';
 
 const generateScriptFlow = ai.defineFlow(
   {
@@ -54,7 +46,6 @@ const generateScriptFlow = ai.defineFlow(
     };
   }
 );
-
 
 export async function generateScript(input: GenerateScriptInput): Promise<GenerateScriptOutput> {
     return generateScriptFlow(input);

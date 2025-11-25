@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
 
 import { MainLayout } from '@/components/layout/main-layout';
@@ -27,12 +26,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { generateScript } from '@/ai/flows/generate-script-flow';
+import { GenerateScriptInputSchema, type GenerateScriptInput } from '@/ai/flows/schemas';
 
-const formSchema = z.object({
-  prompt: z
-    .string()
-    .min(10, { message: 'Descreva seu produto ou serviço com mais detalhes.' }),
-});
 
 // Estimativa de palavras por segundo (a mesma da página de gravação)
 const WORDS_PER_SECOND = 2.5;
@@ -43,14 +38,14 @@ export default function GeradorIaPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<GenerateScriptInput>({
+    resolver: zodResolver(GenerateScriptInputSchema),
     defaultValues: {
       prompt: '',
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: GenerateScriptInput) {
     setIsLoading(true);
     setError(null);
     setGeneratedScript('');
