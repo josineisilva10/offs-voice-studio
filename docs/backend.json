@@ -87,6 +87,9 @@
         "voiceActorId": {
           "type": "string"
         },
+         "voiceActorName": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -112,7 +115,8 @@
             "Padrão",
             "Impacto",
             "Varejo",
-            "Jovem"
+            "Jovem",
+            "Outros"
           ]
         },
         "otherLocutionStyle": {
@@ -147,6 +151,7 @@
       "required": [
         "userId",
         "voiceActorId",
+        "voiceActorName",
         "title",
         "type",
         "style",
@@ -225,6 +230,12 @@
         "$ref": "#/entities/CreditPackage"
       },
       "description": "Lists all available credit packages for purchase."
+    },
+    "/all-orders/{orderId}": {
+      "schema": {
+        "$ref": "#/entities/RecordingOrder"
+      },
+      "description": "A top-level collection of all user orders, intended for admin access and queries."
     }
   }
 }
