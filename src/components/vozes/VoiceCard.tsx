@@ -6,14 +6,43 @@ import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Play } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useState, useEffect, useRef } from 'react';
 
 interface VoiceCardProps {
   actor: VoiceActor;
 }
 
 export function VoiceCard({ actor }: VoiceCardProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (actor.demoAudioUrl) {
+      audioRef.current = new Audio(actor.demoAudioUrl);
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    }
+  }, [actor.demoAudioUrl]);
+
+  const handlePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-1">
       <CardContent className="p-0">
@@ -46,9 +75,14 @@ export function VoiceCard({ actor }: VoiceCardProps) {
             </div>
 
             <div className="flex flex-col gap-2">
-                <Button variant="outline" size="sm">
-                    <Play className="h-4 w-4 mr-2" />
-                    Ouvir Demo
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handlePlayPause}
+                  disabled={!actor.demoAudioUrl}
+                >
+                    {isPlaying ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+                    {isPlaying ? 'Parar' : 'Ouvir Demo'}
                 </Button>
                  <Button variant="ghost" size="sm" className="text-sm text-muted-foreground">
                     Ver Detalhes

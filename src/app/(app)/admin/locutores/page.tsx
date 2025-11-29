@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 const newActorSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   avatarUrl: z.string().url('URL do avatar inválida'),
+  demoAudioUrl: z.string().url('URL do áudio de demonstração inválida'),
   styleTags: z.string().min(1, 'Pelo menos uma tag de estilo é necessária'),
   biography: z.string().min(1, 'Biografia é obrigatória'),
   estimatedDeliveryTime: z.string().min(1, 'Tempo de entrega é obrigatório'),
@@ -61,6 +62,7 @@ export default function AdminLocutoresPage() {
       await addDoc(collection(firestore, 'voice_actors'), {
         name: data.name,
         avatarUrl: data.avatarUrl,
+        demoAudioUrl: data.demoAudioUrl,
         styleTags: data.styleTags.split(',').map(tag => tag.trim()),
         biography: data.biography,
         estimatedDeliveryTime: data.estimatedDeliveryTime,
@@ -109,6 +111,11 @@ export default function AdminLocutoresPage() {
                 <Label htmlFor="avatarUrl">URL do Avatar</Label>
                 <Input id="avatarUrl" {...register('avatarUrl')} />
                 {errors.avatarUrl && <p className="text-red-500 text-sm">{errors.avatarUrl.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="demoAudioUrl">URL do Áudio de Demonstração</Label>
+                <Input id="demoAudioUrl" {...register('demoAudioUrl')} />
+                {errors.demoAudioUrl && <p className="text-red-500 text-sm">{errors.demoAudioUrl.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="styleTags">Tags de Estilo (separadas por vírgula)</Label>

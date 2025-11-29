@@ -50,6 +50,10 @@
           "type": "string",
           "format": "uri"
         },
+        "demoAudioUrl": {
+          "type": "string",
+          "format": "uri"
+        },
         "styleTags": {
           "type": "array",
           "items": {
@@ -70,6 +74,7 @@
         "id",
         "name",
         "avatarUrl",
+        "demoAudioUrl",
         "styleTags",
         "isOnline",
         "estimatedDeliveryTime",

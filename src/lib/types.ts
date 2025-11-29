@@ -11,6 +11,7 @@ export type VoiceActor = {
     id: string;
     name: string;
     avatarUrl: string;
+    demoAudioUrl: string;
     styleTags: string[];
     isOnline: boolean;
     estimatedDeliveryTime: string;
