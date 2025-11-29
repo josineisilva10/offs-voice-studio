@@ -1,191 +1,36 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * Core Philosophy: This ruleset enforces a strict user-ownership model combined with a global admin role.
-     * Users have complete control over their own data (profiles, orders, purchases), which is structurally
-     * segregated for security. Publicly browsable data, like voice actors and credit packages, is readable
-     * by anyone but can only be managed by administrators.
-     *
-     * Data Structure: User-specific data, such as recording orders, is nested under the user's document
-     * (`/users/{userId}/recording_orders/{orderId}`). This provides clear, path-based security. Other data
-     * like purchases is in a top-level collection but contains a `userId` field to enforce ownership.
-     *
-     * Key Security Decisions:
-     * - User data is private: A user can only access documents under their own `/users/{userId}` path or
-     *   documents in other collections that explicitly reference their UID.
-     * - No user listing: It is not possible for any client to list all users of the platform.
-     * - Admin role: A separate `/roles_admin` collection is used as a lookup to grant administrative
-     *   privileges for managing platform-wide data like voice actors and packages.
-     * - Public data is read-only: Collections like `/voice_actors` and `/credit_packages` are publicly
-     *   readable to facilitate browsing but are write-protected for administrators only.
-     *
-     * Denormalization for Authorization: The rules rely on denormalized `userId` fields within documents
-     * (e.g., in the `purchases` collection) to perform fast and secure ownership checks without needing
-     * slow and costly `get()` calls to other documents.
-     *
-     * Structural Segregation: User-private data (e.g., `/users/{userId}/recording_orders`) is kept in a
-     * separate path from publicly readable data (`/voice_actors`), which simplifies list queries and enhances
-     * security.
-     */
-
-    // --------------------------------------------------------------------------
-    // Helper Functions
-    // --------------------------------------------------------------------------
-
-    /**
-     * Checks if the user is authenticated.
-     */
+    
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the currently authenticated user's UID matches the given userId.
-     * Used for path-based ownership checks (e.g., /users/{userId}).
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
-    /**
-     * Checks if the document exists AND the user is the owner.
-     * Crucial for secure update and delete operations.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * Checks if the authenticated user has an admin role by looking for their UID
-     * in the `/roles_admin` collection.
-     */
+    
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && request.auth.token.email == 'josineisilva2@gmail.com';
     }
 
-    /**
-     * On create, validates that the new document's internal 'userId' field
-     * matches the authenticated user's UID.
-     */
-    function isCreatingOwnDoc() {
-      return isSignedIn() && request.resource.data.userId == request.auth.uid;
-    }
-
-    /**
-     * For existing documents, checks if the internal 'userId' field
-     * matches the authenticated user's UID.
-     */
-    function isOwnerOfDoc() {
-      return isSignedIn() && resource.data.userId == request.auth.uid;
-    }
-
-    /**
-     * On update, ensures the 'userId' ownership field cannot be changed.
-     */
-    function isOwnershipUnchanged() {
-      return request.resource.data.userId == resource.data.userId;
-    }
-
-    // --------------------------------------------------------------------------
-    // Collection Rules
-    // --------------------------------------------------------------------------
-
-    /**
-     * @description Manages user profile data. Each user can create their own profile
-     *   and has exclusive read and write access to it thereafter.
-     * @path /users/{userId}
-     * @allow (create) A new user with UID 'user123' creating their own profile at `/users/user123`.
-     * @deny (get) User 'user456' trying to read the profile of 'user123'.
-     * @principle Restricts access to a user's own data tree and allows self-creation of a profile.
-     */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
-    /**
-     * @description Stores voice actor profiles. This data is public for all users to read
-     *   but can only be created, modified, or deleted by administrators.
-     * @path /voice_actors/{voiceActorId}
-     * @allow (list) Any user, signed in or not, listing all voice actors.
-     * @deny (create) A regular, non-admin user trying to add a new voice actor.
-     * @principle Implements a public-read collection with admin-only write access.
-     */
     match /voice_actors/{voiceActorId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    match /credit_packages/{packageId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
     }
 
-    /**
-     * @description Stores a user's recording orders. Orders are nested under the user's
-     *   path, ensuring only the owner or an admin can access them.
-     * @path /users/{userId}/recording_orders/{recordingOrderId}
-     * @allow (create) User 'user123' creating a new order in their own subcollection.
-     * @deny (list) User 'user456' trying to list orders for 'user123'.
-     * @principle Enforces path-based ownership for user-specific subcollections.
-     */
-    match /users/{userId}/recording_orders/{recordingOrderId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if (isOwner(userId) || isAdmin()) && resource != null && isOwnershipUnchanged();
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Stores credit packages available for purchase. This data is public
-     *   for all users to read but can only be managed by administrators.
-     * @path /credit_packages/{creditPackageId}
-     * @allow (get) Any user, signed in or not, viewing the details of a credit package.
-     * @deny (update) A regular user trying to change the price of a package.
-     * @principle Implements a public-read collection with admin-only write access.
-     */
-    match /credit_packages/{creditPackageId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Stores records of credit purchases. A user can create their own purchase
-     *   record and view their own history. Only admins can view all purchase records.
-     * @path /purchases/{purchaseId}
-     * @allow (get) User 'user123' reading a purchase document where `doc.data.userId == 'user123'`.
-     * @deny (list) A regular user trying to list all purchases in the collection.
-     * @principle Enforces document ownership via an internal `userId` field for a top-level collection.
-     */
-    match /purchases/{purchaseId} {
-      allow get: if isOwnerOfDoc() || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isCreatingOwnDoc();
-      allow update: if (isOwnerOfDoc() || isAdmin()) && resource != null && isOwnershipUnchanged();
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    /**
-     * @description Stores a list of admin UIDs. The existence of a user's UID in this
-     *   collection grants them admin privileges throughout the application.
-     * @path /roles_admin/{userId}
-     * @allow (get) An admin user checking if another user ('user456') has an admin role.
-     * @deny (list) A non-admin user trying to list all administrators.
-     * @principle Secures a role-based access control (RBAC) lookup collection.
-     */
-    match /roles_admin/{userId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    match /users/{userId}/orders/{orderId} {
+      allow read, create, update: if isOwner(userId);
+      allow delete: if isOwner(userId) || isAdmin();
     }
   }
 }

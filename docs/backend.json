@@ -1,15 +1,10 @@
 {
   "entities": {
     "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
       "description": "Represents a user of the VozGenius platform.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user entity."
-        },
         "firstName": {
           "type": "string",
           "description": "The first name of the user."
@@ -33,7 +28,6 @@
         }
       },
       "required": [
-        "id",
         "firstName",
         "lastName",
         "whatsAppNumber",
@@ -42,42 +36,34 @@
       ]
     },
     "VoiceActor": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "VoiceActor",
       "type": "object",
       "description": "Represents a voice actor available on the platform.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the voice actor entity."
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "description": "The name of the voice actor."
+          "type": "string"
         },
         "avatarUrl": {
           "type": "string",
-          "description": "URL of the voice actor's avatar image.",
           "format": "uri"
         },
         "styleTags": {
           "type": "array",
-          "description": "Tags representing the voice actor's style (e.g., young, impactful).",
           "items": {
             "type": "string"
           }
         },
         "isOnline": {
-          "type": "boolean",
-          "description": "Indicates whether the voice actor is currently online."
+          "type": "boolean"
         },
         "estimatedDeliveryTime": {
-          "type": "string",
-          "description": "Estimated delivery time for recordings by this voice actor."
+          "type": "string"
         },
         "biography": {
-          "type": "string",
-          "description": "A short biography of the voice actor."
+          "type": "string"
         }
       },
       "required": [
@@ -91,119 +77,113 @@
       ]
     },
     "RecordingOrder": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "RecordingOrder",
       "type": "object",
       "description": "Represents a recording order placed by a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the recording order entity."
-        },
         "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N RecordingOrder)"
+          "type": "string"
         },
         "voiceActorId": {
-          "type": "string",
-          "description": "Reference to VoiceActor. (Relationship: VoiceActor 1:N RecordingOrder)"
+          "type": "string"
         },
         "title": {
-          "type": "string",
-          "description": "The title of the recording."
+          "type": "string"
         },
         "type": {
           "type": "string",
-          "description": "The type of recording (e.g., Off, Produced)."
+          "enum": [
+            "Off",
+            "Produzida"
+          ]
         },
         "style": {
           "type": "string",
-          "description": "The style of recording (e.g., Opening, Commercial)."
+          "enum": [
+            "Abertura",
+            "Comercial",
+            "Chamada para festa",
+            "Vinhetas"
+          ]
         },
         "locutionStyle": {
           "type": "string",
-          "description": "The locution style (e.g., Standard, Impact)."
+          "enum": [
+            "Padrão",
+            "Impacto",
+            "Varejo",
+            "Jovem"
+          ]
         },
         "otherLocutionStyle": {
-          "type": "string",
-          "description": "Optional field for specifying other locution styles."
+          "type": "string"
         },
-        "text": {
-          "type": "string",
-          "description": "The text to be recorded."
+        "script": {
+          "type": "string"
         },
-        "durationSeconds": {
-          "type": "number",
-          "description": "Estimated duration of the recording in seconds."
+        "estimatedDurationSeconds": {
+          "type": "number"
         },
         "creditsUsed": {
-          "type": "number",
-          "description": "Number of credits used for this order."
+          "type": "number"
         },
         "referenceAudioUrl": {
           "type": "string",
-          "description": "URL of the reference audio file.",
           "format": "uri"
         },
         "status": {
           "type": "string",
-          "description": "The status of the order (e.g., Pending, In Production, Completed)."
+          "enum": [
+            "Aguardando entrega",
+            "Em produção",
+            "Concluído"
+          ]
         },
         "orderDate": {
           "type": "string",
-          "description": "The date and time when the order was placed.",
           "format": "date-time"
-        },
-        "finalAudioUrl": {
-          "type": "string",
-          "description": "URL where the final audio can be found once generated",
-          "format": "uri"
         }
       },
       "required": [
-        "id",
         "userId",
         "voiceActorId",
         "title",
         "type",
         "style",
         "locutionStyle",
-        "text",
-        "durationSeconds",
+        "script",
+        "estimatedDurationSeconds",
         "creditsUsed",
         "status",
         "orderDate"
       ]
     },
     "CreditPackage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "CreditPackage",
       "type": "object",
       "description": "Represents a credit package that users can purchase.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the credit package entity."
+          "type": "string"
         },
         "title": {
-          "type": "string",
-          "description": "The title of the credit package (e.g., Package - 1 credit)."
+          "type": "string"
         },
         "creditAmount": {
-          "type": "number",
-          "description": "The number of credits included in the package."
+          "type": "number"
         },
         "price": {
-          "type": "number",
-          "description": "The price of the credit package."
+          "type": "number"
         },
         "description": {
-          "type": "string",
-          "description": "A description of the credit package."
+          "type": "string"
         },
         "packageType": {
           "type": "string",
-          "description": "The type of credit package offered"
+          "enum": [
+            "Office",
+            "Produzida"
+          ]
         }
       },
       "required": [
@@ -214,158 +194,37 @@
         "description",
         "packageType"
       ]
-    },
-    "Purchase": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Purchase",
-      "type": "object",
-      "description": "Represents a purchase of credits by a user.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the purchase entity."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Purchase)"
-        },
-        "creditPackageId": {
-          "type": "string",
-          "description": "Reference to CreditPackage. (Relationship: CreditPackage 1:N Purchase)"
-        },
-        "purchaseDate": {
-          "type": "string",
-          "description": "The date and time of the purchase.",
-          "format": "date-time"
-        },
-        "amountPaid": {
-          "type": "number",
-          "description": "The amount paid for the credit package."
-        },
-        "paymentMethod": {
-          "type": "string",
-          "description": "The method used to pay for this purchase."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "creditPackageId",
-        "purchaseDate",
-        "amountPaid",
-        "paymentMethod"
-      ]
     }
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profiles. Used for user-specific data and settings.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
       },
-      {
-        "path": "/voice_actors/{voiceActorId}",
-        "definition": {
-          "entityName": "VoiceActor",
-          "schema": {
-            "$ref": "#/backend/entities/VoiceActor"
-          },
-          "description": "Stores voice actor profiles and related information.",
-          "params": [
-            {
-              "name": "voiceActorId",
-              "description": "The unique identifier of the voice actor."
-            }
-          ]
-        }
+      "description": "Stores user profiles, including their credit balance and personal information."
+    },
+    "/voice_actors/{voiceActorId}": {
+      "schema": {
+        "$ref": "#/entities/VoiceActor"
       },
-      {
-        "path": "/users/{userId}/recording_orders/{recordingOrderId}",
-        "definition": {
-          "entityName": "RecordingOrder",
-          "schema": {
-            "$ref": "#/backend/entities/RecordingOrder"
-          },
-          "description": "Stores recording orders placed by users. Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who placed the order."
-            },
-            {
-              "name": "recordingOrderId",
-              "description": "The unique identifier of the recording order."
-            }
-          ]
-        }
+      "description": "Stores profiles and details for each voice actor."
+    },
+    "/users/{userId}/orders/{orderId}": {
+      "schema": {
+        "$ref": "#/entities/RecordingOrder"
       },
-      {
-        "path": "/credit_packages/{creditPackageId}",
-        "definition": {
-          "entityName": "CreditPackage",
-          "schema": {
-            "$ref": "#/backend/entities/CreditPackage"
-          },
-          "description": "Stores available credit packages for purchase.",
-          "params": [
-            {
-              "name": "creditPackageId",
-              "description": "The unique identifier of the credit package."
-            }
-          ]
-        }
+      "description": "Stores the recording orders placed by a specific user."
+    },
+    "/credit_packages/{packageId}": {
+      "schema": {
+        "$ref": "#/entities/CreditPackage"
       },
-      {
-        "path": "/purchases/{purchaseId}",
-        "definition": {
-          "entityName": "Purchase",
-          "schema": {
-            "$ref": "#/backend/entities/Purchase"
-          },
-          "description": "Stores records of user purchases.",
-          "params": [
-            {
-              "name": "purchaseId",
-              "description": "The unique identifier of the purchase."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_admin/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Collection to store admin user IDs. Existence of a document indicates admin role.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user with admin role."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore data structure is designed to support VozGenius, a platform for buying and selling voice recordings. The structure prioritizes authorization independence, clarity, and scalability, adhering to the principles outlined in the prompt.  Authorization independence is achieved through denormalization (Strategy A). For example, access to recording orders is determined by the user's ownership (userId). This userId is directly available within the `recording_orders` collection, thus avoiding the need for `get()` calls to a parent `users` document.  Structural Segregation (Strategy B) is used to ensure that collections contain documents with similar security postures.  Access Modeling (Strategy C) utilizes path-based ownership for user-specific data like recording orders (`/users/{userId}/recording_orders/{recordingOrderId}`).  Global roles, such as admin, are managed using dedicated collections (e.g., `/roles_admin/{uid}`) following the DBAC principle.  QAPs are addressed through structural segregation and ownership models, ensuring secure list operations. For instance, listing recording orders is restricted to the owner of those orders, preventing unauthorized access.\n\nThe chosen structure supports the core features:\n\n*   **Users:** Stores user profiles and credit balance.\n*   **Voice Actors:** Stores voice actor profiles, styles and availability.\n*   **Recording Orders:** Stores recording orders placed by users with references to the user and voice actor, order details, attached audio references, and status.\n*   **Credit Packages:** Defines available credit packages.\n*   **Purchases:** Records user purchases of credit packages.\n*   **Admin Roles:** A dedicated collection to store admin roles"
+      "description": "Lists all available credit packages for purchase."
+    }
   }
 }
