@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+      },
     ],
   },
 };
