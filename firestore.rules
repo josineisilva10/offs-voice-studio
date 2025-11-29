@@ -16,31 +16,21 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, create: if isOwner(userId);
-      // Admin can update user profiles (e.g., to add credits)
-      allow update: if isOwner(userId) || isAdmin();
-      // Only admin can delete users for now
-      allow delete: if isAdmin();
-      // Admin needs list access to find users by email
-      allow list: if isAdmin();
+      allow read, write: if isOwner(userId);
     }
 
     match /voice_actors/{voiceActorId} {
       allow read: if isSignedIn();
-      // Only admin can create, update, or delete voice actors
       allow write: if isAdmin();
     }
     
     match /credit_packages/{packageId} {
       allow read: if isSignedIn();
-      // Only admin can manage credit packages
       allow write: if isAdmin();
     }
 
     match /users/{userId}/orders/{orderId} {
-      // A user can manage their own orders
       allow read, create, update: if isOwner(userId);
-      // A user can delete their own orders (if needed), admin can too
       allow delete: if isOwner(userId) || isAdmin();
     }
 
