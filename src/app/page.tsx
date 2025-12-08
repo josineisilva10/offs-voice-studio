@@ -67,8 +67,6 @@ export default function Home() {
       return;
     }
 
-    const numeroWhatsApp = '5500000000000'; // SUBSTITUA PELO SEU NÚMERO DE WHATSAPP
-
     const mensagem = `
 NOVA SOLICITAÇÃO DE LOCUÇÃO
 • Locutor escolhido: ${locutorSelecionado.nome}
@@ -79,8 +77,16 @@ ${textoCliente}
 ---
 Aguardando orçamento final.
     `;
+    
+    // Tenta copiar a mensagem para a área de transferência do usuário
+    navigator.clipboard.writeText(mensagem.trim()).then(() => {
+        alert('A mensagem de solicitação foi copiada! Cole no WhatsApp para continuar.');
+    }).catch(err => {
+        console.error('Erro ao copiar a mensagem: ', err);
+        alert('Por favor, copie manualmente a sua solicitação para o WhatsApp.');
+    });
 
-    const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem.trim())}`;
+    const url = "https://w.app/z2vcnf";
     window.open(url, '_blank');
   };
 
