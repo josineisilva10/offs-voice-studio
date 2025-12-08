@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -6,23 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PlayCircle, Send } from 'lucide-react';
 
-// Dados dos locutores (exemplo)
+// Dados dos locutores (baseado em vozlocutor.com.br)
 const locutores = [
-  {
-    id: 1,
-    nome: 'João Classic',
-    demoUrl: '/audio/demo1.mp3', // Substitua pelos links reais
-  },
-  {
-    id: 2,
-    nome: 'Maria Impacto',
-    demoUrl: '/audio/demo2.mp3',
-  },
-  {
-    id: 3,
-    nome: 'Carlos Varejo',
-    demoUrl: '/audio/demo3.mp3',
-  },
+  { id: 1, nome: 'Adriano Impacto', demoUrl: '' },
+  { id: 2, nome: 'Adriano Jovem', demoUrl: '' },
+  { id: 3, nome: 'Adriano Padrão', demoUrl: '' },
+  { id: 4, nome: 'Alessandro Varejo', demoUrl: '' },
+  { id: 5, nome: 'Alexandre Varejo', demoUrl: '' },
+  { id: 6, nome: 'Alex Impacto', demoUrl: '' },
+  { id: 7, nome: 'Bruno Varejo', demoUrl: '' },
+  { id: 8, nome: 'Carlos Varejo', demoUrl: '' },
 ];
 
 export default function Home() {
@@ -38,6 +32,10 @@ export default function Home() {
   }, [textoCliente]);
 
   const handlePlayDemo = (demoUrl) => {
+    if (!demoUrl) {
+      alert('Áudio de demonstração não disponível.');
+      return;
+    }
     if (audioPlayer) {
       audioPlayer.pause();
       if (audioPlayer.src.includes(demoUrl)) {
@@ -102,7 +100,7 @@ Aguardando orçamento final.
           {/* 1. Sessão: Lista de Locutores */}
           <section>
             <h2 className="text-3xl font-bold text-center mb-8">Locutores Disponíveis</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {locutores.map((locutor) => (
                 <Card key={locutor.id} className={`bg-gray-800 border-gray-700 transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}>
                   <CardHeader>
