@@ -18,6 +18,7 @@ const locutores = [
   { id: 7, nome: 'Bruno Varejo', demoUrl: '' },
   { id: 8, nome: 'Carlos Varejo', demoUrl: '' },
   { id: 9, nome: 'Silvia Fogaça', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1499&v=1' },
+  { id: 10, nome: 'Charles Helfer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1875&v=1' },
 ];
 
 export default function Home() {
