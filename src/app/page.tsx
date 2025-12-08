@@ -17,6 +17,7 @@ const locutores = [
   { id: 6, nome: 'Alex Impacto', demoUrl: '' },
   { id: 7, nome: 'Bruno Varejo', demoUrl: '' },
   { id: 8, nome: 'Carlos Varejo', demoUrl: '' },
+  { id: 9, nome: 'Silvia Fogaça', demoUrl: '' },
 ];
 
 export default function Home() {
