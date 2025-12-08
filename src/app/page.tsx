@@ -17,7 +17,7 @@ const locutores = [
   { id: 6, nome: 'Alex Impacto', demoUrl: '' },
   { id: 7, nome: 'Bruno Varejo', demoUrl: '' },
   { id: 8, nome: 'Carlos Varejo', demoUrl: '' },
-  { id: 9, nome: 'Silvia Fogaça', demoUrl: '' },
+  { id: 9, nome: 'Silvia Fogaça', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1499&v=1' },
 ];
 
 export default function Home() {
