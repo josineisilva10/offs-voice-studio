@@ -96,7 +96,7 @@ export default function Home() {
 
   const handleSolicitar = (locutor: typeof locutores[0]) => {
     setLocutorSelecionado(locutor);
-    document.getElementById('locutores-secao')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('detalhes-secao')?.scrollIntoView({ behavior: 'smooth' });
   };
   
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -211,21 +211,33 @@ Aguardando orçamento final.
         </header>
 
         <main className="space-y-12">
-          
-          <section id="texto-cliente-secao">
-            <h2 className="text-3xl font-bold text-center mb-8">1. Cole seu texto aqui</h2>
-            <Textarea
-              className="w-full min-h-[200px] bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
-              placeholder="Digite ou cole aqui o roteiro da sua locução..."
-              value={textoCliente}
-              onChange={(e) => setTextoCliente(e.target.value)}
-            />
-            <div className="text-center mt-4 text-lg">
-              <span className="font-semibold">Tempo estimado:</span> {tempoEstimado} segundos
+        
+          <section id="locutores-secao">
+            <h2 className="text-3xl font-bold text-center mb-8">1. Locutores Disponíveis</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {locutores.map((locutor) => (
+                <Card key={locutor.id} className={`bg-gray-800 border-gray-700 transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}>
+                  <CardHeader>
+                    <CardTitle className="text-xl text-white">{locutor.nome}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-gray-400">Demonstração profissional</p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button onClick={() => handlePlayDemo(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
+                        <PlayCircle className="mr-2 h-4 w-4" /> 
+                        {audioPlayer && audioPlayer.src.includes(locutor.demoUrl) && !audioPlayer.paused ? 'Parar' : 'Ouvir Demo'}
+                      </Button>
+                      <Button onClick={() => handleSolicitar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                        Selecionar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </section>
 
-          <section>
+          <section id="detalhes-secao">
             <h2 className="text-3xl font-bold text-center mb-8">2. Detalhes da Gravação</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Estilo de Gravação */}
@@ -271,28 +283,16 @@ Aguardando orçamento final.
             </div>
           </section>
 
-          <section id="locutores-secao">
-            <h2 className="text-3xl font-bold text-center mb-8">3. Locutores Disponíveis</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {locutores.map((locutor) => (
-                <Card key={locutor.id} className={`bg-gray-800 border-gray-700 transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}>
-                  <CardHeader>
-                    <CardTitle className="text-xl text-white">{locutor.nome}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-gray-400">Demonstração profissional</p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button onClick={() => handlePlayDemo(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
-                        <PlayCircle className="mr-2 h-4 w-4" /> 
-                        {audioPlayer && audioPlayer.src.includes(locutor.demoUrl) && !audioPlayer.paused ? 'Parar' : 'Ouvir Demo'}
-                      </Button>
-                      <Button onClick={() => handleSolicitar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
-                        Selecionar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          <section id="texto-cliente-secao">
+            <h2 className="text-3xl font-bold text-center mb-8">3. Cole seu texto aqui</h2>
+            <Textarea
+              className="w-full min-h-[200px] bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
+              placeholder="Digite ou cole aqui o roteiro da sua locução..."
+              value={textoCliente}
+              onChange={(e) => setTextoCliente(e.target.value)}
+            />
+            <div className="text-center mt-4 text-lg">
+              <span className="font-semibold">Tempo estimado:</span> {tempoEstimado} segundos
             </div>
           </section>
           
@@ -383,3 +383,5 @@ Aguardando orçamento final.
     </div>
   );
 }
+
+    
