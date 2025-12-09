@@ -23,8 +23,8 @@ const locutores = [
 
 export default function Home() {
   const [textoCliente, setTextoCliente] = useState('');
-  const [locutorSelecionado, setLocutorSelecionado] = useState(null);
-  const [audioPlayer, setAudioPlayer] = useState(null);
+  const [locutorSelecionado, setLocutorSelecionado] = useState<(typeof locutores[0]) | null>(null);
+  const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
 
   const tempoEstimado = useMemo(() => {
     if (!textoCliente.trim()) return 0;
@@ -33,14 +33,14 @@ export default function Home() {
     return segundos;
   }, [textoCliente]);
 
-  const handlePlayDemo = (demoUrl) => {
+  const handlePlayDemo = (demoUrl: string) => {
     if (!demoUrl) {
       alert('Áudio de demonstração não disponível.');
       return;
     }
     if (audioPlayer) {
       audioPlayer.pause();
-      if (audioPlayer.src.includes(demoUrl)) {
+      if (audioPlayer.src.includes(demoUrl) && !audioPlayer.paused) {
         setAudioPlayer(null);
         return;
       }
@@ -51,7 +51,7 @@ export default function Home() {
     newAudio.onended = () => setAudioPlayer(null);
   };
 
-  const handleSolicitar = (locutor) => {
+  const handleSolicitar = (locutor: typeof locutores[0]) => {
     setLocutorSelecionado(locutor);
     // Rola a página para a seção de texto
     document.getElementById('texto-cliente-secao')?.scrollIntoView({ behavior: 'smooth' });
@@ -73,20 +73,14 @@ NOVA SOLICITAÇÃO DE LOCUÇÃO
 • Tempo estimado: ${tempoEstimado} segundos
 • Texto enviado:
 ---
-${textoCliente}
+${textoCliente.trim()}
 ---
 Aguardando orçamento final.
-    `;
+    `.trim();
     
-    // Tenta copiar a mensagem para a área de transferência do usuário
-    navigator.clipboard.writeText(mensagem.trim()).then(() => {
-        alert('A mensagem de solicitação foi copiada! Cole no WhatsApp para continuar.');
-    }).catch(err => {
-        console.error('Erro ao copiar a mensagem: ', err);
-        alert('Por favor, copie manualmente a sua solicitação para o WhatsApp.');
-    });
-
-    const url = "https://w.app/z2vcnf";
+    const numeroWhatsApp = "5591993584049";
+    const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+    
     window.open(url, '_blank');
   };
 
