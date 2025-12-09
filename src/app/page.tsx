@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, CreditCard } from 'lucide-react';
+import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, CreditCard, Copy } from 'lucide-react';
 import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 
@@ -43,6 +43,13 @@ export default function Home() {
 
   // Estado para o valor total
   const [valorTotal, setValorTotal] = useState(0);
+
+  // Estados para o fluxo de pagamento
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState<{ qrCode: string; copyPaste: string } | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'error' | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+
 
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
@@ -86,7 +93,6 @@ export default function Home() {
   const handlePlay = (demoUrl: string) => {
     if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current = null;
     }
     const newAudio = new Audio(demoUrl);
     audioRef.current = newAudio;
@@ -154,6 +160,8 @@ export default function Home() {
   }
 
   const handlePaymentAndOrder = async () => {
+    if (isLoadingPayment || paymentInfo) return; // Evita cliques duplos
+
     if (!user) {
       alert('Usuário não autenticado. Por favor, recarregue a página.');
       return;
@@ -170,6 +178,12 @@ export default function Home() {
       alert('Por favor, preencha todos os campos de estilo e tipo de gravação.');
       return;
     }
+    if (valorTotal <= 0) {
+      alert('O valor do pedido deve ser maior que zero.');
+      return;
+    }
+
+    setIsLoadingPayment(true);
 
     const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
 
@@ -184,26 +198,59 @@ export default function Home() {
       tipoGravacao: tipoGravacao,
       instrucoesAdicionais: instrucoesLocucao || 'Nenhuma',
       valor: valorTotal,
-      status: 'pending', // 'pending', 'paid', 'completed'
+      status: 'pending_payment',
       createdAt: serverTimestamp(),
       hasAudioReferencia: !!audioReferencia,
     };
     
     try {
+      // 1. Salvar o pedido no Firestore
       const ordersColRef = collection(firestore, 'users', user.uid, 'orders');
       const docRef = await addDocumentNonBlocking(ordersColRef, orderData);
       
-      // TODO: Handle audio upload to Firebase Storage if audioReferencia exists
+      if (!docRef) {
+        throw new Error("Não foi possível obter a referência do pedido criado.");
+      }
+      setOrderId(docRef.id);
+
+      // 2. Chamar o backend para criar a cobrança PIX (A SER IMPLEMENTADO)
+      // const response = await fetch('/api/create-payment', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ orderId: docRef.id, amount: valorTotal }),
+      // });
+      // const paymentData = await response.json();
       
+      // if (!response.ok) {
+      //   throw new Error(paymentData.error || 'Falha ao gerar cobrança PIX.');
+      // }
+
+      // setPaymentInfo({ qrCode: paymentData.qrCode, copyPaste: paymentData.copyPaste });
+      // setPaymentStatus('pending');
+
+      // 3. (Temporário) Redirecionar para o link de pagamento manual
       alert('Pedido criado com sucesso! Você será redirecionado para o pagamento.');
-      // Redirect to payment link
       window.open('https://nubank.com.br/cobrar/10dn6x/693785f2-4097-42ea-854d-60b4561a9c64', '_blank');
-      
+
     } catch (error) {
-      console.error("Erro ao criar o pedido: ", error);
-      alert("Ocorreu um erro ao criar seu pedido. Por favor, tente novamente.");
+      console.error("Erro ao criar o pedido ou cobrança: ", error);
+      alert("Ocorreu um erro ao processar seu pedido. Por favor, tente novamente.");
+      setPaymentStatus('error');
+    } finally {
+      setIsLoadingPayment(false);
     }
   };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert("Chave PIX copiada para a área de transferência!");
+  };
+
+  const handleSendOrderInfo = () => {
+    // Lógica para enviar as informações do pedido para o "dono da loja"
+    // via email, WhatsApp, ou salvar em outro lugar.
+    alert(`Informações do pedido ${orderId} enviadas com sucesso!`);
+  }
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
@@ -381,11 +428,42 @@ export default function Home() {
             </Card>
           </section>
 
-          <section className="text-center">
-            <Button size="lg" onClick={handlePaymentAndOrder} className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6" disabled={isUserLoading}>
-              <CreditCard className="mr-3 h-5 w-5" />
-              {isUserLoading ? 'Carregando...' : 'Realizar Pagamento e Enviar Pedido'}
-            </Button>
+          <section className="text-center space-y-6">
+            {!paymentInfo && paymentStatus !== 'paid' &&(
+              <Button size="lg" onClick={handlePaymentAndOrder} className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6" disabled={isUserLoading || isLoadingPayment}>
+                <CreditCard className="mr-3 h-5 w-5" />
+                {isLoadingPayment ? 'Processando...' : isUserLoading ? 'Carregando...' : 'Realizar Pagamento'}
+              </Button>
+            )}
+
+            {paymentStatus === 'paid' ? (
+                <div className="flex flex-col items-center space-y-4">
+                  <p className="text-2xl text-green-400 font-bold">Pagamento efetuado com sucesso!</p>
+                  <Button size="lg" onClick={handleSendOrderInfo} className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6">
+                    <Send className="mr-3 h-5 w-5" />
+                    Enviar Informações da Gravação
+                  </Button>
+                </div>
+            ) : paymentInfo && (
+              <Card className="bg-gray-800 border-gray-700 text-center max-w-md mx-auto">
+                <CardHeader><CardTitle className="text-xl text-white">Finalize o Pagamento</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <p className='text-gray-400'>Escaneie o QR Code com seu app de pagamentos.</p>
+                  {/* Substituir por imagem real do QR Code */}
+                  <div className="bg-white p-2 inline-block rounded-lg">
+                     <p className='text-black'>[QR CODE IMAGE]</p>
+                  </div>
+
+                  <p className='text-gray-400'>Ou use o Pix Copia e Cola:</p>
+                  <div className='flex items-center gap-2'>
+                    <Input type="text" readOnly value={paymentInfo.copyPaste} className="bg-gray-700 border-gray-600 flex-1"/>
+                    <Button onClick={() => handleCopy(paymentInfo.copyPaste)} size="icon">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </section>
         </main>
 
@@ -397,3 +475,4 @@ export default function Home() {
     </div>
   );
 }
+
