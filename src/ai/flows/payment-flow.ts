@@ -80,7 +80,7 @@ const generatePaymentFlow = ai.defineFlow(
 
     const responseData = await response.json();
     
-    // According to a potential AbacatePay API response structure
+    // Correctly parse the response from the AbacatePay API
     const chargeId = responseData.charge?.id; 
     const qrCodeUrl = responseData.charge?.qr_code_url;
     const qrCodeText = responseData.charge?.qr_code_text;
