@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, CreditCard, Copy } from 'lucide-react';
 import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
+import { generatePayment } from '@/ai/flows/payment-flow';
 
 
 // Dados dos locutores
@@ -51,7 +52,7 @@ export default function Home() {
 
   // Estados para o fluxo de pagamento
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState<{ qrCode: string; copyPaste: string } | null>(null);
+  const [paymentInfo, setPaymentInfo] = useState<{ qrCodeUrl: string; qrCodeText: string } | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'generating' | 'pending_payment' | 'paid' | 'error'>('idle');
   const [orderId, setOrderId] = useState<string | null>(null);
 
@@ -203,18 +204,32 @@ export default function Home() {
       if (!docRef) { throw new Error("Não foi possível obter a referência do pedido criado."); }
       setOrderId(docRef.id);
 
-      // 2. Chamar o backend para criar a cobrança PIX (A SER IMPLEMENTADO com Abacate Pay)
+      // 2. Chamar o backend (Genkit flow) para criar a cobrança PIX com Abacate Pay
       console.log("Chamando backend para gerar pagamento para o pedido:", docRef.id);
-      alert("Pedido registrado! O próximo passo é integrar com o Abacate Pay para gerar o QR Code aqui.");
 
-      // A partir daqui, a lógica de chamar a API da Abacate Pay seria adicionada.
-      // A API retornaria o QR Code e o Copia e Cola.
-      // setPaymentInfo({ qrCode: 'qrCodeDaApi', copyPaste: 'copiaEColaDaApi' });
-      // setPaymentStatus('pending_payment');
+      const paymentResponse = await generatePayment({
+        amount: valorTotal * 100, // API provavelmente espera o valor em centavos
+        customer: {
+          name: nomePagador,
+          email: emailPagador,
+          cpf: cpfPagador,
+        },
+        description: `Pedido de locução #${docRef.id}`
+      });
 
+      if (paymentResponse && paymentResponse.qrCodeUrl && paymentResponse.qrCodeText) {
+        setPaymentInfo({
+          qrCodeUrl: paymentResponse.qrCodeUrl,
+          qrCodeText: paymentResponse.qrCodeText,
+        });
+        setPaymentStatus('pending_payment');
+      } else {
+        throw new Error('A resposta da API de pagamento não continha os dados do PIX.');
+      }
+      
     } catch (error) {
-      console.error("Erro ao criar o pedido: ", error);
-      alert("Ocorreu um erro ao registrar seu pedido. Por favor, tente novamente.");
+      console.error("Erro ao criar o pedido ou gerar o pagamento: ", error);
+      alert("Ocorreu um erro ao processar seu pedido. Por favor, tente novamente.");
       setPaymentStatus('error');
     } finally {
       setIsLoadingPayment(false);
@@ -411,26 +426,6 @@ export default function Home() {
                   {tipoGravacao === 'Produzida (voz + trilha + efeitos)' ? 'Gravação Produzida' : tipoGravacao === 'Off (somente voz)' ? 'Gravação Off (só a voz)' : 'Selecione o tipo de gravação'}
                 </p>
 
-                {isCheckoutReady && paymentStatus === 'idle' && (
-                   <Card className="bg-gray-700/50 border-gray-600 text-left p-6 space-y-4">
-                      <CardTitle className="text-lg text-white">Dados do Pagador</CardTitle>
-                      <div className='space-y-4'>
-                          <div>
-                              <Label htmlFor="nome-pagador">Nome Completo</Label>
-                              <Input id="nome-pagador" type="text" placeholder="Seu nome completo" value={nomePagador} onChange={(e) => setNomePagador(e.target.value)} className="bg-gray-800 border-gray-600"/>
-                          </div>
-                          <div>
-                              <Label htmlFor="cpf-pagador">CPF</Label>
-                              <Input id="cpf-pagador" type="text" placeholder="000.000.000-00" value={cpfPagador} onChange={(e) => setCpfPagador(e.target.value)} className="bg-gray-800 border-gray-600"/>
-                          </div>
-                          <div>
-                              <Label htmlFor="email-pagador">E-mail</Label>
-                              <Input id="email-pagador" type="email" placeholder="seu-email@dominio.com" value={emailPagador} onChange={(e) => setEmailPagador(e.target.value)} className="bg-gray-800 border-gray-600"/>
-                          </div>
-                      </div>
-                   </Card>
-                )}
-
                 {paymentStatus === 'paid' ? (
                   <div className="flex flex-col items-center space-y-4 pt-4">
                     <p className="text-2xl text-green-400 font-bold">Pagamento efetuado com sucesso!</p>
@@ -445,12 +440,12 @@ export default function Home() {
                     <CardContent className="space-y-4">
                       <p className='text-gray-400'>Escaneie o QR Code com seu app de pagamentos.</p>
                       <div className="bg-white p-2 inline-block rounded-lg">
-                         <img src={paymentInfo.qrCode} alt="PIX QR Code" className='w-40 h-40' />
+                         <img src={paymentInfo.qrCodeUrl} alt="PIX QR Code" className='w-40 h-40' />
                       </div>
                       <p className='text-gray-400'>Ou use o Pix Copia e Cola:</p>
                       <div className='flex items-center gap-2'>
-                        <Input type="text" readOnly value={paymentInfo.copyPaste} className="bg-gray-700 border-gray-600 flex-1"/>
-                        <Button onClick={() => handleCopy(paymentInfo.copyPaste)} size="icon">
+                        <Input type="text" readOnly value={paymentInfo.qrCodeText} className="bg-gray-700 border-gray-600 flex-1"/>
+                        <Button onClick={() => handleCopy(paymentInfo.qrCodeText)} size="icon">
                           <Copy className="h-4 w-4" />
                         </Button>
                       </div>
@@ -458,15 +453,36 @@ export default function Home() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <Button 
-                    size="lg" 
-                    onClick={handleGeneratePayment} 
-                    className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6" 
-                    disabled={isUserLoading || isLoadingPayment || !isCheckoutReady}
-                  >
-                    <CreditCard className="mr-3 h-5 w-5" />
-                    {isLoadingPayment ? 'Gerando Pagamento...' : isUserLoading ? 'Carregando...' : 'Gerar Pagamento'}
-                  </Button>
+                  <>
+                    {isCheckoutReady && (
+                       <Card className="bg-gray-700/50 border-gray-600 text-left p-6 space-y-4">
+                          <CardTitle className="text-lg text-white">Dados do Pagador</CardTitle>
+                          <div className='space-y-4'>
+                              <div>
+                                  <Label htmlFor="nome-pagador">Nome Completo</Label>
+                                  <Input id="nome-pagador" type="text" placeholder="Seu nome completo" value={nomePagador} onChange={(e) => setNomePagador(e.target.value)} className="bg-gray-800 border-gray-600"/>
+                              </div>
+                              <div>
+                                  <Label htmlFor="cpf-pagador">CPF</Label>
+                                  <Input id="cpf-pagador" type="text" placeholder="000.000.000-00" value={cpfPagador} onChange={(e) => setCpfPagador(e.target.value)} className="bg-gray-800 border-gray-600"/>
+                              </div>
+                              <div>
+                                  <Label htmlFor="email-pagador">E-mail</Label>
+                                  <Input id="email-pagador" type="email" placeholder="seu-email@dominio.com" value={emailPagador} onChange={(e) => setEmailPagador(e.target.value)} className="bg-gray-800 border-gray-600"/>
+                              </div>
+                          </div>
+                       </Card>
+                    )}
+                    <Button 
+                      size="lg" 
+                      onClick={handleGeneratePayment} 
+                      className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6 mt-4" 
+                      disabled={isUserLoading || isLoadingPayment || !isCheckoutReady || !nomePagador || !cpfPagador || !emailPagador}
+                    >
+                      <CreditCard className="mr-3 h-5 w-5" />
+                      {isLoadingPayment ? 'Gerando Pagamento...' : isUserLoading ? 'Carregando...' : 'Gerar Pagamento'}
+                    </Button>
+                  </>
                 )}
               </CardContent>
             </Card>
