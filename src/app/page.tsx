@@ -1,14 +1,14 @@
 
 'use client';
 
-import React, { useState, useMemo, ChangeEvent } from 'react';
+import React, { useState, useMemo, ChangeEvent, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { PlayCircle, Send, FileAudio } from 'lucide-react';
+import { PlayCircle, Send, FileAudio, Mic, Square, Trash2 } from 'lucide-react';
 
 // Dados dos locutores
 const locutores = [
@@ -36,6 +36,12 @@ export default function Home() {
   const [tipoGravacao, setTipoGravacao] = useState('');
   const [instrucoesLocucao, setInstrucoesLocucao] = useState('');
   const [audioReferencia, setAudioReferencia] = useState<File | null>(null);
+
+  // Estados para gravação de áudio
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudioURL, setRecordedAudioURL] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
 
   const tempoEstimado = useMemo(() => {
@@ -69,10 +75,52 @@ export default function Home() {
   };
   
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setAudioReferencia(event.target.files[0]);
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setAudioReferencia(file);
+      setRecordedAudioURL(URL.createObjectURL(file));
     }
   };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audioFile = new File([audioBlob], 'gravacao_referencia.wav', { type: 'audio/wav' });
+        setRecordedAudioURL(audioUrl);
+        setAudioReferencia(audioFile);
+        audioChunksRef.current = [];
+      };
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setRecordedAudioURL(null);
+      setAudioReferencia(null);
+    } catch (err) {
+      console.error("Erro ao acessar o microfone:", err);
+      alert("Não foi possível acessar o microfone. Por favor, verifique as permissões do seu navegador.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const deleteAudio = () => {
+    setAudioReferencia(null);
+    setRecordedAudioURL(null);
+    // Also reset file input
+    const fileInput = document.getElementById('audio-upload') as HTMLInputElement;
+    if(fileInput) fileInput.value = '';
+  }
 
   const handleEnviarWhatsApp = () => {
     if (!locutorSelecionado) {
@@ -152,7 +200,7 @@ Aguardando orçamento final.
                         {audioPlayer && audioPlayer.src.includes(locutor.demoUrl) && !audioPlayer.paused ? 'Parar' : 'Ouvir Demo'}
                       </Button>
                       <Button onClick={() => handleSolicitar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
-                        Solicitar
+                        Selecionar
                       </Button>
                     </div>
                   </CardContent>
@@ -236,15 +284,40 @@ Aguardando orçamento final.
                 </Card>
                 <Card className="bg-gray-800 border-gray-700">
                   <CardHeader><CardTitle>Envie um áudio de referência</CardTitle></CardHeader>
-                  <CardContent>
-                    <p className="text-gray-400 mb-4 text-sm">Grave ou envie um áudio com o estilo desejado ou com o modelo de referência.</p>
-                     <Input id="audio" type="file" accept="audio/*" onChange={handleFileChange} className="text-gray-400 file:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 hover:file:bg-purple-700"/>
-                      {audioReferencia && (
-                        <div className="mt-4 text-green-400 flex items-center">
-                          <FileAudio className="mr-2 h-4 w-4" />
-                          <span>{audioReferencia.name} selecionado.</span>
-                        </div>
+                  <CardContent className="space-y-4">
+                    <p className="text-gray-400 text-sm">Grave ou envie um áudio com o estilo desejado ou com o modelo de referência.</p>
+
+                    <div className="flex flex-wrap gap-2">
+                       {!isRecording && (
+                        <Button onClick={startRecording} className="bg-red-600 hover:bg-red-700">
+                          <Mic className="mr-2 h-4 w-4" /> Gravar Áudio
+                        </Button>
                       )}
+                      {isRecording && (
+                        <Button onClick={stopRecording} className="bg-gray-600 hover:bg-gray-700">
+                          <Square className="mr-2 h-4 w-4" /> Parar Gravação
+                        </Button>
+                      )}
+                      <Label htmlFor="audio-upload" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-purple-600 text-white hover:bg-purple-700 h-10 px-4 py-2 cursor-pointer">
+                        <FileAudio className="mr-2 h-4 w-4"/> Enviar Arquivo
+                      </Label>
+                      <Input id="audio-upload" type="file" accept="audio/*" onChange={handleFileChange} className="hidden"/>
+                    </div>
+                    
+                    {recordedAudioURL && (
+                      <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+                        <p className="text-green-400 flex items-center mb-2">
+                          <FileAudio className="mr-2 h-4 w-4" />
+                          <span>{audioReferencia?.name} pronto para envio.</span>
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <audio src={recordedAudioURL} controls className="w-full h-10" />
+                          <Button onClick={deleteAudio} variant="destructive" size="icon">
+                             <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
              </div>
@@ -279,3 +352,5 @@ Aguardando orçamento final.
     </div>
   );
 }
+
+    
