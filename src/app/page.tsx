@@ -8,10 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, CreditCard, Copy, X } from 'lucide-react';
-import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
-import { generatePayment } from '@/ai/flows/payment-flow';
+import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle } from 'lucide-react';
+import { useFirebase, useUser, initiateAnonymousSignIn } from '@/firebase';
 
 
 // Dados dos locutores
@@ -45,22 +43,7 @@ export default function Home() {
   // Estado para o valor total
   const [valorTotal, setValorTotal] = useState(0);
 
-  // Dados do pagador
-  const [nomePagador, setNomePagador] = useState('');
-  const [cpfPagador, setCpfPagador] = useState('');
-  const [emailPagador, setEmailPagador] = useState('');
-  const [telefonePagador, setTelefonePagador] = useState('');
-
-
-  // Estados para o fluxo de pagamento
-  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState<{ qrCodeUrl: string; qrCodeText: string } | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'generating' | 'pending_payment' | 'paid' | 'error'>('idle');
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-
-
-  const { auth, firestore } = useFirebase();
+  const { auth } = useFirebase();
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
@@ -168,197 +151,45 @@ export default function Home() {
     if(fileInput) fileInput.value = '';
   }
 
-  const handleGeneratePayment = async () => {
-    // Validações
-    if (!user) { alert('Usuário não autenticado. Por favor, recarregue a página.'); return; }
-    if (!locutorSelecionado) { alert('Por favor, selecione um locutor primeiro.'); return; }
-    if (!textoCliente.trim()) { alert('Por favor, insira o texto para a locução.'); return; }
-    if (!estiloGravacao || !estiloLocucao || !tipoGravacao) { alert('Por favor, preencha todos os campos de estilo e tipo de gravação.'); return; }
-    if (valorTotal <= 0) { alert('O valor do pedido deve ser maior que zero.'); return; }
-    if (!nomePagador.trim() || !cpfPagador.trim() || !emailPagador.trim()) { alert('Por favor, preencha seus dados (Nome, CPF e E-mail) para gerar o pagamento.'); return; }
-
-    setPaymentStatus('generating');
-    setIsLoadingPayment(true);
-
+  const handleSendWhatsApp = () => {
     const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
+    const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    const orderData = {
-      userId: user.uid,
-      customer: { name: nomePagador, cpf: cpfPagador, email: emailPagador, cellphone: telefonePagador },
-      locutorId: locutorSelecionado.id,
-      locutorNome: locutorSelecionado.nome,
-      texto: textoCliente.trim(),
-      tempoEstimado: tempoEstimado,
-      estiloGravacao: estiloGravacao,
-      estiloLocucao: estiloLocucaoFinal,
-      tipoGravacao: tipoGravacao,
-      instrucoesAdicionais: instrucoesLocucao || 'Nenhuma',
-      valor: valorTotal,
-      status: 'pending_payment', // Status inicial
-      createdAt: serverTimestamp(),
-      hasAudioReferencia: !!audioReferencia,
-    };
+    const message = `
+Olá! Gostaria de solicitar uma locução.
+
+*RESUMO DO PEDIDO:*
+-----------------
+*Locutor(a):* ${locutorSelecionado?.nome}
+*Estilo de Gravação:* ${estiloGravacao}
+*Estilo de Locução:* ${estiloLocucaoFinal}
+*Tipo de Gravação:* ${tipoGravacao}
+*Tempo Estimado:* ${tempoEstimado} segundos
+*Valor Total:* ${valorFormatado}
+-----------------
+
+*TEXTO PARA GRAVAÇÃO:*
+"${textoCliente.trim()}"
+
+*INSTRUÇÕES ADICIONAIS:*
+"${instrucoesLocucao || 'Nenhuma'}"
+
+${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferencia.name})` : ''}
+`;
+
+    const encodedMessage = encodeURIComponent(message.trim());
+    // Substitua 'SEUNUMERO' pelo seu número de WhatsApp com código do país (ex: 5511999999999)
+    const whatsappUrl = `https://wa.me/SEUNUMERO?text=${encodedMessage}`;
     
-    try {
-      // 1. Salvar o pedido no Firestore
-      const ordersColRef = collection(firestore, 'users', user.uid, 'orders');
-      const docRef = await addDocumentNonBlocking(ordersColRef, orderData);
-      
-      if (!docRef) { throw new Error("Não foi possível obter a referência do pedido criado."); }
-      const newOrderId = docRef.id;
-      setOrderId(newOrderId);
-
-      // 2. Chamar o backend (Genkit flow) para criar a cobrança PIX com Abacate Pay
-      console.log("Chamando backend para gerar pagamento para o pedido:", newOrderId);
-
-      const paymentResponse = await generatePayment({
-        amount: Math.round(valorTotal * 100), // API espera o valor em centavos
-        customer: {
-          name: nomePagador,
-          email: emailPagador,
-          cpf: cpfPagador,
-          cellphone: telefonePagador,
-        },
-        description: `Pedido de locução #${newOrderId}`,
-        orderId: newOrderId,
-      });
-
-      if (paymentResponse && paymentResponse.qrCodeUrl && paymentResponse.qrCodeText) {
-        setPaymentInfo({
-          qrCodeUrl: paymentResponse.qrCodeUrl,
-          qrCodeText: paymentResponse.qrCodeText,
-        });
-        setPaymentStatus('pending_payment');
-      } else {
-        throw new Error('A resposta da API de pagamento não continha os dados do PIX.');
-      }
-      
-    } catch (error) {
-      console.error("Erro ao criar o pedido ou gerar o pagamento: ", error);
-      alert("Ocorreu um erro ao processar seu pedido. Por favor, tente novamente.");
-      setPaymentStatus('error');
-    } finally {
-      setIsLoadingPayment(false);
-    }
+    window.open(whatsappUrl, '_blank');
   };
-
-  const handleOpenCheckout = () => {
-    // Validações antes de abrir o modal
-    if (!locutorSelecionado) { alert('Por favor, selecione um locutor primeiro.'); return; }
-    if (!textoCliente.trim()) { alert('Por favor, insira o texto para a locução.'); return; }
-    if (!estiloGravacao || !estiloLocucao || !tipoGravacao) { alert('Por favor, preencha todos os campos de estilo e tipo de gravação.'); return; }
-    if (valorTotal <= 0) { alert('O valor do pedido deve ser maior que zero.'); return; }
-    
-    // Resetar estados de pagamento antes de abrir
-    setPaymentStatus('idle');
-    setPaymentInfo(null);
-    setIsLoadingPayment(false);
-    setShowCheckoutModal(true);
-  }
-
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert("Chave PIX copiada para a área de transferência!");
-  };
-
-  const handleSendOrderInfo = () => {
-    // Lógica para enviar as informações do pedido para o "dono da loja"
-    // via email, WhatsApp, ou salvar em outro lugar.
-    console.log(`Enviando informações do pedido PAGO: ${orderId}`);
-    alert(`Informações do pedido ${orderId} enviadas com sucesso!`);
-    setShowCheckoutModal(false); // Fecha o modal após enviar
-  }
 
   const isOrderReady = valorTotal > 0 && locutorSelecionado && textoCliente && estiloGravacao && estiloLocucao && tipoGravacao;
-
-  const renderCheckoutModal = () => {
-    if (!showCheckoutModal) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
-        <Card className="bg-gray-800 border-gray-700 w-full max-w-md relative">
-          <Button onClick={() => setShowCheckoutModal(false)} variant="ghost" size="icon" className="absolute top-2 right-2 text-gray-400 hover:text-white">
-            <X className="h-5 w-5" />
-          </Button>
-
-          {paymentStatus === 'paid' ? (
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center space-y-4 pt-4 text-center">
-                <p className="text-2xl text-green-400 font-bold">Pagamento efetuado com sucesso!</p>
-                <p className="text-gray-300">Seu pedido foi registrado. Agora você pode enviar os detalhes para produção.</p>
-                <Button size="lg" onClick={handleSendOrderInfo} className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6">
-                  <Send className="mr-3 h-5 w-5" />
-                  Enviar Informações da Gravação
-                </Button>
-              </div>
-            </CardContent>
-          ) : paymentStatus === 'pending_payment' && paymentInfo ? (
-             <CardContent className="pt-6">
-                <CardHeader className="p-0 mb-4 text-center">
-                  <CardTitle className="text-xl text-white">Finalize o Pagamento</CardTitle>
-                </CardHeader>
-                <div className="space-y-4">
-                  <p className='text-gray-400 text-center'>Escaneie o QR Code com seu app de pagamentos.</p>
-                  <div className="bg-white p-2 inline-block rounded-lg mx-auto block w-fit">
-                      <img src={paymentInfo.qrCodeUrl} alt="PIX QR Code" className='w-40 h-40' />
-                  </div>
-                  <p className='text-gray-400 text-center'>Ou use o Pix Copia e Cola:</p>
-                  <div className='flex items-center gap-2'>
-                    <Input type="text" readOnly value={paymentInfo.qrCodeText} className="bg-gray-700 border-gray-600 flex-1"/>
-                    <Button onClick={() => handleCopy(paymentInfo.qrCodeText)} size="icon">
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                    <p className="text-yellow-400 text-sm animate-pulse text-center">Aguardando confirmação do pagamento...</p>
-                </div>
-              </CardContent>
-          ) : (
-            <CardContent className="pt-6">
-              <CardHeader className="p-0 mb-4">
-                <CardTitle className="text-xl text-white text-center">Dados do Pagador</CardTitle>
-              </CardHeader>
-              <div className='space-y-4'>
-                  <div>
-                      <Label htmlFor="nome-pagador-modal">Nome Completo</Label>
-                      <Input id="nome-pagador-modal" type="text" placeholder="Seu nome completo" value={nomePagador} onChange={(e) => setNomePagador(e.target.value)} className="bg-gray-700 border-gray-600"/>
-                  </div>
-                  <div>
-                      <Label htmlFor="telefone-pagador-modal">Telefone</Label>
-                      <Input id="telefone-pagador-modal" type="tel" placeholder="(11) 99999-9999" value={telefonePagador} onChange={(e) => setTelefonePagador(e.target.value)} className="bg-gray-700 border-gray-600"/>
-                  </div>
-                  <div>
-                      <Label htmlFor="cpf-pagador-modal">CPF</Label>
-                      <Input id="cpf-pagador-modal" type="text" placeholder="000.000.000-00" value={cpfPagador} onChange={(e) => setCpfPagador(e.target.value)} className="bg-gray-700 border-gray-600"/>
-                  </div>
-                  <div>
-                      <Label htmlFor="email-pagador-modal">E-mail</Label>
-                      <Input id="email-pagador-modal" type="email" placeholder="seu-email@dominio.com" value={emailPagador} onChange={(e) => setEmailPagador(e.target.value)} className="bg-gray-700 border-gray-600"/>
-                  </div>
-                  <Button 
-                    size="lg" 
-                    onClick={handleGeneratePayment} 
-                    className="w-full bg-green-600 hover:bg-green-700 text-lg py-6 mt-4" 
-                    disabled={isLoadingPayment || !nomePagador || !cpfPagador || !emailPagador || !telefonePagador}
-                  >
-                    <CreditCard className="mr-3 h-5 w-5" />
-                    {isLoadingPayment ? 'Criando QR Code...' : 'Criar QR Code'}
-                  </Button>
-                  {paymentStatus === 'error' && <p className="text-red-500 text-sm text-center">Falha ao gerar o pagamento. Tente novamente.</p>}
-              </div>
-            </CardContent>
-          )}
-        </Card>
-      </div>
-    );
-  }
-
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
       <div className="container mx-auto p-4 md:p-8">
         
-        {renderCheckoutModal()}
-
         <header className="text-center my-8 md:my-12">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
             Neyzinho das Produções
@@ -516,7 +347,7 @@ export default function Home() {
           </section>
 
           <section id="pagamento-secao">
-            <h2 className="text-3xl font-bold text-center mb-8">5. Pagamento</h2>
+            <h2 className="text-3xl font-bold text-center mb-8">5. Finalizar</h2>
             <Card className="bg-gray-800 border-gray-700 text-center max-w-2xl mx-auto">
               <CardHeader>
                 <CardTitle className="text-2xl text-white">Orçamento Final</CardTitle>
@@ -531,12 +362,12 @@ export default function Home() {
 
                 <Button 
                   size="lg" 
-                  onClick={handleOpenCheckout} 
+                  onClick={handleSendWhatsApp} 
                   className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6 mt-4" 
                   disabled={isUserLoading || !isOrderReady}
                 >
-                  <CreditCard className="mr-3 h-5 w-5" />
-                  {isUserLoading ? 'Carregando...' : 'Finalizar e Pagar'}
+                  <Send className="mr-3 h-5 w-5" />
+                  {isUserLoading ? 'Carregando...' : 'Enviar Informações via WhatsApp'}
                 </Button>
               </CardContent>
             </Card>
@@ -551,3 +382,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
