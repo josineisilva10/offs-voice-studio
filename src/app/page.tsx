@@ -95,7 +95,7 @@ export default function Home() {
   };
 
 
-  const handleSolicitar = (locutor: typeof locutores[0]) => {
+  const handleSelecionar = (locutor: typeof locutores[0]) => {
     setLocutorSelecionado(locutor);
     document.getElementById('detalhes-secao')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -228,7 +228,7 @@ Aguardando orçamento final.
                         <PlayCircle className="mr-2 h-4 w-4" /> 
                         {currentPlayingUrl === locutor.demoUrl ? 'Parar' : 'Ouvir Demo'}
                       </Button>
-                      <Button onClick={() => handleSolicitar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                      <Button onClick={() => handleSelecionar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
                         Selecionar
                       </Button>
                     </div>
