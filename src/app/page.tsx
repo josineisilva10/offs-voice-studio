@@ -19,8 +19,11 @@ const locutores = [
 export default function Home() {
   const [textoCliente, setTextoCliente] = useState('');
   const [locutorSelecionado, setLocutorSelecionado] = useState<(typeof locutores[0]) | null>(null);
-  const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Estado para controlar o áudio
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentPlayingUrl, setCurrentPlayingUrl] = useState<string | null>(null);
+
 
   // Estados para os novos campos
   const [estiloGravacao, setEstiloGravacao] = useState('');
@@ -68,31 +71,25 @@ export default function Home() {
     }
     setValorTotal(valor);
   }, [tempoEstimado, tipoGravacao]);
-
+  
   const handlePlayDemo = (demoUrl: string) => {
-    if (!demoUrl) {
-      alert('Áudio de demonstração não disponível.');
-      return;
-    }
-
-    if (audioPlayer && audioPlayer.src === demoUrl) {
-      if (isPlaying) {
-        audioPlayer.pause();
-        setIsPlaying(false);
-      } else {
-        audioPlayer.play();
-        setIsPlaying(true);
-      }
+    if (currentPlayingUrl === demoUrl) {
+      // Se a URL clicada já estiver tocando, pausa
+      audioRef.current?.pause();
+      setCurrentPlayingUrl(null);
     } else {
-      if (audioPlayer) {
-        audioPlayer.pause();
+      // Se outra URL estiver tocando, para ela
+      if (audioRef.current) {
+        audioRef.current.pause();
       }
+      // Cria e toca a nova URL
       const newAudio = new Audio(demoUrl);
-      setAudioPlayer(newAudio);
-      setIsPlaying(true);
+      audioRef.current = newAudio;
       newAudio.play();
+      setCurrentPlayingUrl(demoUrl);
+      // Limpa o estado quando o áudio terminar
       newAudio.onended = () => {
-        setIsPlaying(false);
+        setCurrentPlayingUrl(null);
       };
     }
   };
@@ -229,7 +226,7 @@ Aguardando orçamento final.
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button onClick={() => handlePlayDemo(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
                         <PlayCircle className="mr-2 h-4 w-4" /> 
-                        {audioPlayer && audioPlayer.src === locutor.demoUrl && isPlaying ? 'Parar' : 'Ouvir Demo'}
+                        {currentPlayingUrl === locutor.demoUrl ? 'Parar' : 'Ouvir Demo'}
                       </Button>
                       <Button onClick={() => handleSolicitar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
                         Selecionar
