@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { PlayCircle, Send, FileAudio, Mic, Square, Trash2 } from 'lucide-react';
+import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle } from 'lucide-react';
 
 // Dados dos locutores
 const locutores = [
@@ -22,8 +22,6 @@ export default function Home() {
   
   // Estado para controlar o áudio
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [currentPlayingUrl, setCurrentPlayingUrl] = useState<string | null>(null);
-
 
   // Estados para os novos campos
   const [estiloGravacao, setEstiloGravacao] = useState('');
@@ -72,25 +70,19 @@ export default function Home() {
     setValorTotal(valor);
   }, [tempoEstimado, tipoGravacao]);
   
-  const handlePlayDemo = (demoUrl: string) => {
-    if (currentPlayingUrl === demoUrl) {
-      // Se a URL clicada já estiver tocando, pausa
-      audioRef.current?.pause();
-      setCurrentPlayingUrl(null);
-    } else {
-      // Se outra URL estiver tocando, para ela
-      if (audioRef.current) {
+  const handlePlay = (demoUrl: string) => {
+    if (audioRef.current) {
         audioRef.current.pause();
-      }
-      // Cria e toca a nova URL
-      const newAudio = new Audio(demoUrl);
-      audioRef.current = newAudio;
-      newAudio.play();
-      setCurrentPlayingUrl(demoUrl);
-      // Limpa o estado quando o áudio terminar
-      newAudio.onended = () => {
-        setCurrentPlayingUrl(null);
-      };
+    }
+    const newAudio = new Audio(demoUrl);
+    audioRef.current = newAudio;
+    newAudio.play();
+  };
+
+  const handleStop = () => {
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
     }
   };
 
@@ -224,10 +216,16 @@ Aguardando orçamento final.
                   <CardContent className="space-y-4">
                     <p className="text-gray-400">Demonstração profissional</p>
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <Button onClick={() => handlePlayDemo(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
-                        <PlayCircle className="mr-2 h-4 w-4" /> 
-                        {currentPlayingUrl === locutor.demoUrl ? 'Parar' : 'Ouvir Demo'}
-                      </Button>
+                       <div className="flex-1 flex gap-2">
+                         <Button onClick={() => handlePlay(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
+                           <PlayCircle className="mr-2 h-4 w-4" /> 
+                           Play
+                         </Button>
+                         <Button onClick={handleStop} className="flex-1 bg-red-700 hover:bg-red-600">
+                           <StopCircle className="mr-2 h-4 w-4" /> 
+                           Stop
+                         </Button>
+                       </div>
                       <Button onClick={() => handleSelecionar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
                         Selecionar
                       </Button>
