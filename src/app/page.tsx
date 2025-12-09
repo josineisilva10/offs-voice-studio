@@ -12,16 +12,8 @@ import { PlayCircle, Send, FileAudio, Mic, Square, Trash2 } from 'lucide-react';
 
 // Dados dos locutores
 const locutores = [
-  { id: 1, nome: 'Adriano Impacto', demoUrl: '' },
-  { id: 2, nome: 'Adriano Jovem', demoUrl: '' },
-  { id: 3, nome: 'Adriano Padrão', demoUrl: '' },
-  { id: 4, nome: 'Alessandro Varejo', demoUrl: '' },
-  { id: 5, nome: 'Alexandre Varejo', demoUrl: '' },
-  { id: 6, nome: 'Alex Impacto', demoUrl: '' },
-  { id: 7, nome: 'Bruno Varejo', demoUrl: '' },
-  { id: 8, nome: 'Carlos Varejo', demoUrl: '' },
-  { id: 9, nome: 'Silvia Fogaça', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1499&v=1' },
-  { id: 10, nome: 'Charles Helfer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1875&v=1' },
+  { id: 1, nome: 'Silvia Fogaça', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1499&v=1' },
+  { id: 2, nome: 'Charles Helfer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1875&v=1' },
 ];
 
 export default function Home() {
