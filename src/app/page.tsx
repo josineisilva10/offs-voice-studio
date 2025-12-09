@@ -16,7 +16,7 @@ import { collection, serverTimestamp } from 'firebase/firestore';
 // Dados dos locutores
 const locutores = [
   { id: 1, nome: 'Silvia Fogaça', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1499&v=1' },
-  { id: 2, nome: 'Charles Helfer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1875&v=1' },
+  { id: 2, nome: 'Charles Helfer', demoUrl: 'https://vozlocutor.com.br/charleshelfer' },
   { id: 3, nome: 'Denilson Soares', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3199&v=1' },
 ];
 
@@ -203,27 +203,18 @@ export default function Home() {
       if (!docRef) { throw new Error("Não foi possível obter a referência do pedido criado."); }
       setOrderId(docRef.id);
 
-      // 2. Chamar o backend para criar a cobrança PIX (A SER IMPLEMENTADO)
-      // Esta chamada retornaria o QR Code e o Copia e Cola
+      // 2. Chamar o backend para criar a cobrança PIX (A SER IMPLEMENTADO com Abacate Pay)
       console.log("Chamando backend para gerar pagamento para o pedido:", docRef.id);
+      alert("Pedido registrado! O próximo passo é integrar com o Abacate Pay para gerar o QR Code aqui.");
 
-      // --- SIMULAÇÃO DE RESPOSTA DA API ---
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simula delay da API
-      const fakePaymentData = {
-        qrCode: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", // Placeholder
-        copyPaste: `https://nubank.com.br/cobrar/10dn6x/693785f2-4097-42ea-854d-60b4561a9c64_valor=${valorTotal}` // Simulação com valor
-      };
-      setPaymentInfo(fakePaymentData);
-      // --- FIM DA SIMULAÇÃO ---
-
-      setPaymentStatus('pending_payment');
-
-      // Futuramente, aqui entraria a lógica para ouvir o status do pagamento
-      // Ex: Iniciar um long polling ou websocket para verificar o status do pedido `docRef.id`
+      // A partir daqui, a lógica de chamar a API da Abacate Pay seria adicionada.
+      // A API retornaria o QR Code e o Copia e Cola.
+      // setPaymentInfo({ qrCode: 'qrCodeDaApi', copyPaste: 'copiaEColaDaApi' });
+      // setPaymentStatus('pending_payment');
 
     } catch (error) {
-      console.error("Erro ao criar o pedido ou cobrança: ", error);
-      alert("Ocorreu um erro ao processar seu pedido. Por favor, tente novamente.");
+      console.error("Erro ao criar o pedido: ", error);
+      alert("Ocorreu um erro ao registrar seu pedido. Por favor, tente novamente.");
       setPaymentStatus('error');
     } finally {
       setIsLoadingPayment(false);
@@ -477,7 +468,6 @@ export default function Home() {
                     {isLoadingPayment ? 'Gerando Pagamento...' : isUserLoading ? 'Carregando...' : 'Gerar Pagamento'}
                   </Button>
                 )}
-
               </CardContent>
             </Card>
           </section>
@@ -491,4 +481,3 @@ export default function Home() {
     </div>
   );
 }
-
