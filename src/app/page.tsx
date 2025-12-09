@@ -186,7 +186,7 @@ ${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferenc
   const isOrderReady = valorTotal > 0 && locutorSelecionado && textoCliente && estiloGravacao && estiloLocucao && tipoGravacao;
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen">
+    <div className="text-white min-h-screen">
       <div className="container mx-auto p-4 md:p-8">
         
         <header className="text-center my-8 md:my-12">

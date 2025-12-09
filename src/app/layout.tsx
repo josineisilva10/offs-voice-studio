@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)} style={{ background: 'radial-gradient(ellipse at center, hsl(var(--background)) 0%, hsl(224, 71%, 2%))' }}>
         <Providers>
           {children}
         </Providers>
