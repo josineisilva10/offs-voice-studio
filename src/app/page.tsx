@@ -75,6 +75,8 @@ export default function Home() {
   const [tipoGravacao, setTipoGravacao] = useState('');
   const [instrucoesLocucao, setInstrucoesLocucao] = useState('');
   const [audioReferencia, setAudioReferencia] = useState<File | null>(null);
+  const [trilhaSonora, setTrilhaSonora] = useState<File | null>(null);
+
 
   // Estados para gravação de áudio
   const [isRecording, setIsRecording] = useState(false);
@@ -166,6 +168,13 @@ export default function Home() {
     }
   };
 
+  const handleTrilhaFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setTrilhaSonora(file);
+    }
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -241,6 +250,7 @@ ${textoParaGravacao}
 "${instrucoesLocucao || 'Nenhuma'}"
 
 ${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferencia.name})` : ''}
+${trilhaSonora ? `\n(O cliente enviou uma trilha sonora: ${trilhaSonora.name})` : ''}
 `;
 
     const encodedMessage = encodeURIComponent(message.trim());
@@ -339,6 +349,25 @@ ${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferenc
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Off (somente voz)" id="tipo-off" /><Label htmlFor="tipo-off">Off (somente voz)</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Produzida (voz + trilha + efeitos)" id="tipo-produzida" /><Label htmlFor="tipo-produzida">Produzida (com trilha e efeitos)</Label></div>
                   </RadioGroup>
+                  {tipoGravacao === 'Produzida (voz + trilha + efeitos)' && (
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                      <Label htmlFor="trilha-upload" className="font-semibold text-white">Trilha Sonora (Opcional)</Label>
+                      <p className="text-gray-400 text-sm mb-2">Envie o arquivo de áudio da trilha.</p>
+                      <Input 
+                        id="trilha-upload" 
+                        type="file" 
+                        accept="audio/*" 
+                        onChange={handleTrilhaFileChange} 
+                        className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"
+                      />
+                       {trilhaSonora && (
+                        <div className="mt-2 text-green-400 text-xs flex items-center">
+                          <FileAudio className="mr-2 h-3 w-3" />
+                          <span>{trilhaSonora.name}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
