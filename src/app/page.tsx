@@ -82,6 +82,11 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // Estados para os campos de vinheta
+  const [vinheta1, setVinheta1] = useState('');
+  const [vinheta2, setVinheta2] = useState('');
+  const [vinheta3, setVinheta3] = useState('');
+
   // Estado para o valor total
   const [valorTotal, setValorTotal] = useState(0);
 
@@ -94,12 +99,19 @@ export default function Home() {
     }
   }, [isUserLoading, user, auth]);
 
+  const textoCompleto = useMemo(() => {
+    if (estiloGravacao === 'Vinheta') {
+      return [vinheta1, vinheta2, vinheta3].filter(Boolean).join(' ');
+    }
+    return textoCliente;
+  }, [estiloGravacao, textoCliente, vinheta1, vinheta2, vinheta3]);
+
   const tempoEstimado = useMemo(() => {
-    if (!textoCliente.trim()) return 0;
-    const palavras = textoCliente.trim().split(/\s+/).length;
+    if (!textoCompleto.trim()) return 0;
+    const palavras = textoCompleto.trim().split(/\s+/).length;
     const segundos = Math.ceil(palavras / 2.5);
     return segundos;
-  }, [textoCliente]);
+  }, [textoCompleto]);
 
   useEffect(() => {
     if (!tipoGravacao || tempoEstimado === 0) {
@@ -197,6 +209,21 @@ export default function Home() {
     const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
     const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+    let textoParaGravacao = '';
+    if (estiloGravacao === 'Vinheta') {
+      textoParaGravacao = `
+*TEXTO PARA GRAVAÇÃO (VINHETAS):*
+*Vinheta 1:* "${vinheta1 || 'Não preenchida'}"
+*Vinheta 2:* "${vinheta2 || 'Não preenchida'}"
+*Vinheta 3:* "${vinheta3 || 'Não preenchida'}"
+`;
+    } else {
+      textoParaGravacao = `
+*TEXTO PARA GRAVAÇÃO:*
+"${textoCliente.trim()}"
+`;
+    }
+
     const message = `
 Olá! Gostaria de solicitar uma locução.
 
@@ -209,10 +236,7 @@ Olá! Gostaria de solicitar uma locução.
 *Tempo Estimado:* ${tempoEstimado} segundos
 *Valor Total:* ${valorFormatado}
 -----------------
-
-*TEXTO PARA GRAVAÇÃO:*
-"${textoCliente.trim()}"
-
+${textoParaGravacao}
 *INSTRUÇÕES ADICIONAIS:*
 "${instrucoesLocucao || 'Nenhuma'}"
 
@@ -225,7 +249,8 @@ ${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferenc
     window.open(whatsappUrl, '_blank');
   };
 
-  const isOrderReady = valorTotal > 0 && locutorSelecionado && textoCliente && estiloGravacao && estiloLocucao && tipoGravacao;
+  const isTextProvided = estiloGravacao === 'Vinheta' ? (vinheta1 || vinheta2 || vinheta3) : textoCliente;
+  const isOrderReady = valorTotal > 0 && locutorSelecionado && isTextProvided && estiloGravacao && estiloLocucao && tipoGravacao;
 
   return (
     <div className="text-white min-h-screen">
@@ -321,12 +346,47 @@ ${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferenc
 
           <section id="texto-cliente-secao">
             <h2 className="text-3xl font-bold text-center mb-8">3. Cole seu texto aqui</h2>
-            <Textarea
-              className="w-full min-h-[200px] bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
-              placeholder="Digite ou cole aqui o roteiro da sua locução..."
-              value={textoCliente}
-              onChange={(e) => setTextoCliente(e.target.value)}
-            />
+            {estiloGravacao === 'Vinheta' ? (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor='vinheta1' className="text-lg font-semibold mb-2 block">Vinheta 1</Label>
+                  <Input
+                    id="vinheta1"
+                    className="w-full bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
+                    placeholder="Digite o texto para a vinheta 1"
+                    value={vinheta1}
+                    onChange={(e) => setVinheta1(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor='vinheta2' className="text-lg font-semibold mb-2 block">Vinheta 2</Label>
+                  <Input
+                    id="vinheta2"
+                    className="w-full bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
+                    placeholder="Digite o texto para a vinheta 2"
+                    value={vinheta2}
+                    onChange={(e) => setVinheta2(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor='vinheta3' className="text-lg font-semibold mb-2 block">Vinheta 3</Label>
+                  <Input
+                    id="vinheta3"
+                    className="w-full bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
+                    placeholder="Digite o texto para a vinheta 3"
+                    value={vinheta3}
+                    onChange={(e) => setVinheta3(e.target.value)}
+                  />
+                </div>
+              </div>
+            ) : (
+              <Textarea
+                className="w-full min-h-[200px] bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
+                placeholder="Digite ou cole aqui o roteiro da sua locução..."
+                value={textoCliente}
+                onChange={(e) => setTextoCliente(e.target.value)}
+              />
+            )}
             <div className="text-center mt-4 text-lg">
               <span className="font-semibold">Tempo estimado:</span> {tempoEstimado} segundos
             </div>
