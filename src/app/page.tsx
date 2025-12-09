@@ -20,6 +20,7 @@ export default function Home() {
   const [textoCliente, setTextoCliente] = useState('');
   const [locutorSelecionado, setLocutorSelecionado] = useState<(typeof locutores[0]) | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Estados para os novos campos
   const [estiloGravacao, setEstiloGravacao] = useState('');
@@ -73,18 +74,29 @@ export default function Home() {
       alert('Áudio de demonstração não disponível.');
       return;
     }
-    if (audioPlayer) {
-      audioPlayer.pause();
-      if (audioPlayer.src.includes(demoUrl) && !audioPlayer.paused) {
-        setAudioPlayer(null);
-        return;
+
+    if (audioPlayer && audioPlayer.src === demoUrl) {
+      if (isPlaying) {
+        audioPlayer.pause();
+        setIsPlaying(false);
+      } else {
+        audioPlayer.play();
+        setIsPlaying(true);
       }
+    } else {
+      if (audioPlayer) {
+        audioPlayer.pause();
+      }
+      const newAudio = new Audio(demoUrl);
+      setAudioPlayer(newAudio);
+      setIsPlaying(true);
+      newAudio.play();
+      newAudio.onended = () => {
+        setIsPlaying(false);
+      };
     }
-    const newAudio = new Audio(demoUrl);
-    setAudioPlayer(newAudio);
-    newAudio.play();
-    newAudio.onended = () => setAudioPlayer(null);
   };
+
 
   const handleSolicitar = (locutor: typeof locutores[0]) => {
     setLocutorSelecionado(locutor);
@@ -217,7 +229,7 @@ Aguardando orçamento final.
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button onClick={() => handlePlayDemo(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
                         <PlayCircle className="mr-2 h-4 w-4" /> 
-                        {audioPlayer && audioPlayer.src.includes(locutor.demoUrl) && !audioPlayer.paused ? 'Parar' : 'Ouvir Demo'}
+                        {audioPlayer && audioPlayer.src === locutor.demoUrl && isPlaying ? 'Parar' : 'Ouvir Demo'}
                       </Button>
                       <Button onClick={() => handleSolicitar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
                         Selecionar
