@@ -17,6 +17,7 @@ const GeneratePaymentInputSchema = z.object({
     name: z.string(),
     email: z.string().email(),
     cpf: z.string(),
+    cellphone: z.string().optional(),
   }),
   description: z.string().optional(),
   orderId: z.string().describe('The internal order ID of the system.'),
@@ -65,6 +66,7 @@ const generatePaymentFlow = ai.defineFlow(
                 name: input.customer.name,
                 email: input.customer.email,
                 taxId: input.customer.cpf,
+                cellphone: input.customer.cellphone,
             },
             metadata: {
               externalId: input.orderId,
