@@ -178,8 +178,7 @@ ${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferenc
 `;
 
     const encodedMessage = encodeURIComponent(message.trim());
-    // Substitua 'SEUNUMERO' pelo seu número de WhatsApp com código do país (ex: 5511999999999)
-    const whatsappUrl = `https://wa.me/SEUNUMERO?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/5591993584049?text=${encodedMessage}`;
     
     window.open(whatsappUrl, '_blank');
   };
@@ -382,5 +381,3 @@ ${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferenc
     </div>
   );
 }
-
-    
