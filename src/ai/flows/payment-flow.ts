@@ -82,14 +82,14 @@ const generatePaymentFlow = ai.defineFlow(
 
     const responseData = await response.json();
     
-    // Correctly parse the response from the AbacatePay API
-    const chargeId = responseData.charge?.id; 
-    const qrCodeUrl = responseData.charge?.qr_code_url;
-    const qrCodeText = responseData.charge?.qr_code_text;
+    // Correctly parse the response from the AbacatePay API based on user feedback
+    const chargeId = responseData.data?.id; 
+    const qrCodeUrl = responseData.data?.brCodeBase64;
+    const qrCodeText = responseData.data?.brCode;
 
     if (!chargeId || !qrCodeUrl || !qrCodeText) {
         console.error('Abacate Pay API response is missing required fields:', responseData);
-        throw new Error('Invalid response from payment provider. Expected charge.id, charge.qr_code_url, and charge.qr_code_text.');
+        throw new Error('Invalid response from payment provider. Expected data.id, data.brCodeBase64, and data.brCode.');
     }
 
     return {
