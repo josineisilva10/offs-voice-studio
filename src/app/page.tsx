@@ -19,6 +19,21 @@ const locutores = [
   { id: 3, nome: 'Denilson Soares', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3199&v=1' },
   { id: 4, nome: 'Rogerio Britto', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=360&v=1' },
   { id: 5, nome: 'Jorge', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1948&v=1' },
+  { id: 6, nome: 'Andre William', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=87&v=1' },
+  { id: 7, nome: 'Jana Hanauer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5793&v=1' },
+  { id: 8, nome: 'Sara Luiza', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5720&v=1' },
+  { id: 9, nome: 'JC', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=680&v=1' },
+  { id: 10, nome: 'Pablo Siqueira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3358&v=1' },
+  { id: 11, nome: 'Patricia Trezzi', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5061&v=1' },
+  { id: 12, nome: 'Patricia Vieira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1714&v=1' },
+  { id: 13, nome: 'Donato De Paula', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5257&v=1' },
+  { id: 14, nome: 'Jonas Moreira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2420&v=1' },
+  { id: 15, nome: 'Elissandra Lima', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=570&v=1' },
+  { id: 16, nome: 'Lula Muniz', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=222&v=1' },
+  { id: 17, nome: 'Antonio Manoel', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=176&v=1' },
+  { id: 18, nome: 'Anderson Henrique', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=183&v=1' },
+  { id: 19, nome: 'Robson Ferreira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=4568&v=1' },
+  { id: 20, nome: 'Silva Jr', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=4223&v=1' },
 ];
 
 export default function Home() {
