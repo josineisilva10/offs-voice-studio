@@ -73,10 +73,11 @@ export default function Home() {
   const handlePlay = (demoUrl: string) => {
     if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current = null;
     }
     const newAudio = new Audio(demoUrl);
     audioRef.current = newAudio;
-    newAudio.play();
+    newAudio.play().catch(error => console.error("Erro ao tocar o áudio:", error));
   };
 
   const handleStop = () => {
