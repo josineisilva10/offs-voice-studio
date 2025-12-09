@@ -74,7 +74,6 @@ export default function Home() {
   const handlePlay = (demoUrl: string) => {
     if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = '';
         audioRef.current = null;
     }
     const newAudio = new Audio(demoUrl);
@@ -85,7 +84,6 @@ export default function Home() {
   const handleStop = () => {
     if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = '';
         audioRef.current = null;
     }
   };
@@ -216,7 +214,7 @@ ${audioReferencia ? `*Áudio de referência:* Sim (será enviado separadamente)`
         
           <section id="locutores-secao">
             <h2 className="text-3xl font-bold text-center mb-8">1. Locutores Disponíveis</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {locutores.map((locutor) => (
                 <Card key={locutor.id} className={`bg-gray-800 border-gray-700 transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}>
                   <CardHeader>
