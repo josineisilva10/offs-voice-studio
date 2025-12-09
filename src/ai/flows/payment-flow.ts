@@ -26,7 +26,7 @@ export type GeneratePaymentInput = z.infer<typeof GeneratePaymentInputSchema>;
 
 const GeneratePaymentOutputSchema = z.object({
   chargeId: z.string().describe('The unique ID for the charge from the payment provider.'),
-  qrCodeUrl: z.string().url().describe('The URL of the QR code image to be displayed.'),
+  qrCodeUrl: z.string().describe('The URL of the QR code image to be displayed.'),
   qrCodeText: z.string().describe('The text string for the PIX "Copia e Cola".'),
 });
 export type GeneratePaymentOutput = z.infer<typeof GeneratePaymentOutputSchema>;
@@ -65,7 +65,7 @@ const generatePaymentFlow = ai.defineFlow(
             customer: {
                 name: input.customer.name,
                 email: input.customer.email,
-                taxId: input.customer.cpf,
+                taxId: input.customer.cpf, // Corrigido de 'cpf' para 'taxId'
                 cellphone: input.customer.cellphone,
             },
             metadata: {
