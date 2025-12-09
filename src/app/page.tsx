@@ -487,7 +487,7 @@ ${trilhaSonora ? `\n(O cliente enviou uma trilha sonora: ${trilhaSonora.name})` 
                   {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
                 <p className="text-sm text-gray-400 -mt-4">
-                  {tipoGravacao === 'Produzida (voz + trilha + efeitos)' ? 'Gravação Produzida' : tipoGravacao === 'Off (somente voz)' ? 'Gravação Off (só a voz)' : 'Selecione o tipo de gravação'}
+                  {tipoGravacao ? tipoGravacao : 'Selecione o tipo de gravação'}
                 </p>
 
                 <Button 
@@ -502,6 +502,33 @@ ${trilhaSonora ? `\n(O cliente enviou uma trilha sonora: ${trilhaSonora.name})` 
               </CardContent>
             </Card>
           </section>
+
+          <section id="tabela-precos-secao" className="mt-12">
+            <h2 className="text-3xl font-bold text-center mb-8">Tabela de Preços</h2>
+            <div className="max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="bg-gray-800 border-gray-700 text-center">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">Locução OFF</CardTitle>
+                  <p className="text-sm text-gray-400">(somente a voz)</p>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-green-400">R$ 7,00</p>
+                  <p className="text-sm text-gray-500">para textos de até 40 segundos.</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-gray-800 border-gray-700 text-center">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">Locução Produzida</CardTitle>
+                  <p className="text-sm text-gray-400">(voz + trilha + efeitos)</p>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-green-400">R$ 15,00</p>
+                  <p className="text-sm text-gray-500">para textos de até 40 segundos.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
         </main>
 
         <footer className="text-center mt-12 py-6 border-t border-gray-800">
