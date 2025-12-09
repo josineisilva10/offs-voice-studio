@@ -195,8 +195,9 @@ export default function Home() {
       
       // TODO: Handle audio upload to Firebase Storage if audioReferencia exists
       
-      alert('Pedido criado com sucesso! Em breve, você será redirecionado para o pagamento.');
-      // Next step: Show QR code modal using the created order ID (docRef.id)
+      alert('Pedido criado com sucesso! Você será redirecionado para o pagamento.');
+      // Redirect to payment link
+      window.open('https://nubank.com.br/cobrar/10dn6x/693785f2-4097-42ea-854d-60b4561a9c64', '_blank');
       
     } catch (error) {
       console.error("Erro ao criar o pedido: ", error);
