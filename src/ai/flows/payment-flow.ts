@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const GeneratePaymentInputSchema = z.object({
   amount: z.number().describe('The payment amount in cents.'),
