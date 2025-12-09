@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, ChangeEvent, useRef } from 'react';
+import React, { useState, useMemo, ChangeEvent, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -43,6 +43,8 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // Estado para o valor total
+  const [valorTotal, setValorTotal] = useState(0);
 
   const tempoEstimado = useMemo(() => {
     if (!textoCliente.trim()) return 0;
@@ -50,6 +52,29 @@ export default function Home() {
     const segundos = Math.ceil(palavras / 2.5);
     return segundos;
   }, [textoCliente]);
+
+  useEffect(() => {
+    if (!tipoGravacao || tempoEstimado === 0) {
+      setValorTotal(0);
+      return;
+    }
+
+    let valor = 0;
+    if (tipoGravacao === 'Produzida (voz + trilha + efeitos)') {
+      if (tempoEstimado <= 40) {
+        valor = 15;
+      } else {
+        valor = 15 + (tempoEstimado - 40) * 0.35;
+      }
+    } else if (tipoGravacao === 'Off (somente voz)') {
+      if (tempoEstimado <= 40) {
+        valor = 7;
+      } else {
+        valor = 7 + (tempoEstimado - 40) * 0.20;
+      }
+    }
+    setValorTotal(valor);
+  }, [tempoEstimado, tipoGravacao]);
 
   const handlePlayDemo = (demoUrl: string) => {
     if (!demoUrl) {
@@ -71,7 +96,7 @@ export default function Home() {
 
   const handleSolicitar = (locutor: typeof locutores[0]) => {
     setLocutorSelecionado(locutor);
-    document.getElementById('texto-cliente-secao')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('locutores-secao')?.scrollIntoView({ behavior: 'smooth' });
   };
   
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +142,6 @@ export default function Home() {
   const deleteAudio = () => {
     setAudioReferencia(null);
     setRecordedAudioURL(null);
-    // Also reset file input
     const fileInput = document.getElementById('audio-upload') as HTMLInputElement;
     if(fileInput) fileInput.value = '';
   }
@@ -137,6 +161,7 @@ export default function Home() {
     }
 
     const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
+    const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     const mensagem = `
 *NOVA SOLICITAÇÃO DE LOCUÇÃO*
@@ -154,6 +179,8 @@ ${textoCliente.trim()}
 -----------------------------------------
 *Instruções Adicionais:*
 ${instrucoesLocucao || 'Nenhuma'}
+-----------------------------------------
+*VALOR TOTAL ESTIMADO:* ${valorFormatado}
 -----------------------------------------
 ${audioReferencia ? `*Áudio de referência:* Sim (será enviado separadamente)` : ''}
 
@@ -184,33 +211,9 @@ Aguardando orçamento final.
         </header>
 
         <main className="space-y-12">
-          <section>
-            <h2 className="text-3xl font-bold text-center mb-8">1. Locutores Disponíveis</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {locutores.map((locutor) => (
-                <Card key={locutor.id} className={`bg-gray-800 border-gray-700 transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}>
-                  <CardHeader>
-                    <CardTitle className="text-xl text-white">{locutor.nome}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-gray-400">Demonstração profissional</p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button onClick={() => handlePlayDemo(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
-                        <PlayCircle className="mr-2 h-4 w-4" /> 
-                        {audioPlayer && audioPlayer.src.includes(locutor.demoUrl) && !audioPlayer.paused ? 'Parar' : 'Ouvir Demo'}
-                      </Button>
-                      <Button onClick={() => handleSolicitar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
-                        Selecionar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-
+          
           <section id="texto-cliente-secao">
-            <h2 className="text-3xl font-bold text-center mb-8">2. Cole seu texto aqui</h2>
+            <h2 className="text-3xl font-bold text-center mb-8">1. Cole seu texto aqui</h2>
             <Textarea
               className="w-full min-h-[200px] bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
               placeholder="Digite ou cole aqui o roteiro da sua locução..."
@@ -223,7 +226,7 @@ Aguardando orçamento final.
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-center mb-8">3. Detalhes da Gravação</h2>
+            <h2 className="text-3xl font-bold text-center mb-8">2. Detalhes da Gravação</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Estilo de Gravação */}
               <Card className="bg-gray-800 border-gray-700">
@@ -265,6 +268,31 @@ Aguardando orçamento final.
                   </RadioGroup>
                 </CardContent>
               </Card>
+            </div>
+          </section>
+
+          <section id="locutores-secao">
+            <h2 className="text-3xl font-bold text-center mb-8">3. Locutores Disponíveis</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {locutores.map((locutor) => (
+                <Card key={locutor.id} className={`bg-gray-800 border-gray-700 transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}>
+                  <CardHeader>
+                    <CardTitle className="text-xl text-white">{locutor.nome}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-gray-400">Demonstração profissional</p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button onClick={() => handlePlayDemo(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
+                        <PlayCircle className="mr-2 h-4 w-4" /> 
+                        {audioPlayer && audioPlayer.src.includes(locutor.demoUrl) && !audioPlayer.paused ? 'Parar' : 'Ouvir Demo'}
+                      </Button>
+                      <Button onClick={() => handleSolicitar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                        Selecionar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </section>
           
@@ -324,14 +352,17 @@ Aguardando orçamento final.
           </section>
 
           <section>
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-gray-800 border-gray-700 text-center">
               <CardHeader>
-                <CardTitle className="text-xl text-white">Regras de Preço</CardTitle>
+                <CardTitle className="text-2xl text-white">Orçamento Estimado</CardTitle>
               </CardHeader>
               <CardContent className="text-gray-300 space-y-2">
-                <p>• Cada 40 segundos de locução <span className="font-bold text-green-400">PRODUZIDA</span> = R$ 15,00</p>
-                <p>• Cada 40 segundos de locução <span className="font-bold text-yellow-400">OFF (só a voz)</span> = R$ 7,00</p>
-                <p className="text-sm text-gray-400">O valor é proporcional. Por exemplo, uma locução de 80 segundos custará o dobro do valor base.</p>
+                <p className="text-4xl font-bold text-green-400">
+                  {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+                <p className="text-sm text-gray-400">
+                  {tipoGravacao === 'Produzida (voz + trilha + efeitos)' ? 'Gravação Produzida' : tipoGravacao === 'Off (somente voz)' ? 'Gravação Off (só a voz)' : 'Selecione o tipo de gravação'}
+                </p>
               </CardContent>
             </Card>
           </section>
@@ -352,5 +383,3 @@ Aguardando orçamento final.
     </div>
   );
 }
-
-    
