@@ -55,6 +55,9 @@ const locutores = [
   { id: 39, nome: 'Emerson Costa', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3423&v=1' },
   { id: 40, nome: 'Lindy', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=698&v=1' },
   { id: 41, nome: 'Alan Leandro', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=488&v=1' },
+  { id: 42, nome: 'Brandão', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1387&v=1' },
+  { id: 43, nome: 'Bobby', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5841&v=1' },
+  { id: 44, nome: 'Absamira Santos', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2052&v=1' },
 ];
 
 export default function Home() {
