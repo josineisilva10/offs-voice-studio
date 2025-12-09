@@ -19,6 +19,7 @@ const GeneratePaymentInputSchema = z.object({
     cpf: z.string(),
   }),
   description: z.string().optional(),
+  orderId: z.string().describe('The internal order ID of the system.'),
 });
 export type GeneratePaymentInput = z.infer<typeof GeneratePaymentInputSchema>;
 
@@ -49,30 +50,25 @@ const generatePaymentFlow = ai.defineFlow(
       throw new Error('ABACATE_PAY_API_KEY environment variable is not set.');
     }
 
-    // IMPORTANT: The URL below is a placeholder. You need to replace it
-    // with the actual Abacate Pay API endpoint for creating PIX charges.
-    const abacatePayApiUrl = 'https://api.abacatepay.com/v1/pix/charge';
+    const abacatePayApiUrl = 'https://api.abacatepay.com/v1/pixQrCode/create';
 
     const response = await fetch(abacatePayApiUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-Api-Key': apiKey, // Common practice for API key authentication
+            'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
+            amount: input.amount,
+            description: input.description ?? 'Pedido de Locução',
             customer: {
                 name: input.customer.name,
                 email: input.customer.email,
-                tax_id: input.customer.cpf, // APIs often use 'tax_id' for CPF/CNPJ
+                taxId: input.customer.cpf,
             },
-            items: [
-              {
-                description: input.description ?? 'Pedido de Locução',
-                amount: input.amount, // Amount in cents
-                quantity: 1,
-              }
-            ],
-            // Add other required parameters by Abacate Pay API here
+            metadata: {
+              externalId: input.orderId,
+            }
         }),
     });
 
@@ -83,17 +79,15 @@ const generatePaymentFlow = ai.defineFlow(
     }
 
     const responseData = await response.json();
-
-    // IMPORTANT: The field names below (`id`, `qr_code_image_url`, `qr_code_text`)
-    // are placeholders. You need to inspect the actual response from the
-    // Abacate Pay API and adjust these to match the real data.
-    const chargeId = responseData.id; 
-    const qrCodeUrl = responseData.qr_code_image_url;
-    const qrCodeText = responseData.qr_code_text;
+    
+    // According to a potential AbacatePay API response structure
+    const chargeId = responseData.charge?.id; 
+    const qrCodeUrl = responseData.charge?.qr_code_url;
+    const qrCodeText = responseData.charge?.qr_code_text;
 
     if (!chargeId || !qrCodeUrl || !qrCodeText) {
         console.error('Abacate Pay API response is missing required fields:', responseData);
-        throw new Error('Invalid response from payment provider.');
+        throw new Error('Invalid response from payment provider. Expected charge.id, charge.qr_code_url, and charge.qr_code_text.');
     }
 
     return {

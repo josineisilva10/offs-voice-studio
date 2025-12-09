@@ -202,19 +202,21 @@ export default function Home() {
       const docRef = await addDocumentNonBlocking(ordersColRef, orderData);
       
       if (!docRef) { throw new Error("Não foi possível obter a referência do pedido criado."); }
-      setOrderId(docRef.id);
+      const newOrderId = docRef.id;
+      setOrderId(newOrderId);
 
       // 2. Chamar o backend (Genkit flow) para criar a cobrança PIX com Abacate Pay
-      console.log("Chamando backend para gerar pagamento para o pedido:", docRef.id);
+      console.log("Chamando backend para gerar pagamento para o pedido:", newOrderId);
 
       const paymentResponse = await generatePayment({
-        amount: valorTotal * 100, // API provavelmente espera o valor em centavos
+        amount: Math.round(valorTotal * 100), // API espera o valor em centavos
         customer: {
           name: nomePagador,
           email: emailPagador,
           cpf: cpfPagador,
         },
-        description: `Pedido de locução #${docRef.id}`
+        description: `Pedido de locução #${newOrderId}`,
+        orderId: newOrderId,
       });
 
       if (paymentResponse && paymentResponse.qrCodeUrl && paymentResponse.qrCodeText) {
