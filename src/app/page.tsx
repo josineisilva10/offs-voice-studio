@@ -14,7 +14,7 @@ import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, CreditCar
 const locutores = [
   { id: 1, nome: 'Silvia Fogaça', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1499&v=1' },
   { id: 2, nome: 'Charles Helfer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1875&v=1' },
-  { id: 3, nome: 'Denilson Soares', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=255&v=1' },
+  { id: 3, nome: 'Denilson Soares', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3199&v=1' },
 ];
 
 export default function Home() {
