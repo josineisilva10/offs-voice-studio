@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, CreditCard } from 'lucide-react';
+import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
+
 
 // Dados dos locutores
 const locutores = [
@@ -40,6 +43,15 @@ export default function Home() {
 
   // Estado para o valor total
   const [valorTotal, setValorTotal] = useState(0);
+
+  const { auth, firestore } = useFirebase();
+  const { user, isUserLoading } = useUser();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [isUserLoading, user, auth]);
 
   const tempoEstimado = useMemo(() => {
     if (!textoCliente.trim()) return 0;
@@ -141,7 +153,11 @@ export default function Home() {
     if(fileInput) fileInput.value = '';
   }
 
-  const handlePaymentAndOrder = () => {
+  const handlePaymentAndOrder = async () => {
+    if (!user) {
+      alert('Usuário não autenticado. Por favor, recarregue a página.');
+      return;
+    }
     if (!locutorSelecionado) {
       alert('Por favor, selecione um locutor primeiro.');
       return;
@@ -156,44 +172,35 @@ export default function Home() {
     }
 
     const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
-    const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const paymentLink = "https://nubank.com.br/cobrar/10dn6x/693785f2-4097-42ea-854d-60b4561a9c64";
 
-    const mensagem = `
-*NOVA SOLICITAÇÃO DE LOCUÇÃO*
------------------------------------------
-*Locutor Escolhido:* ${locutorSelecionado.nome}
-*Tempo Estimado:* ${tempoEstimado} segundos
------------------------------------------
-*Texto para Gravação:*
-${textoCliente.trim()}
------------------------------------------
-*DETALHES DO PEDIDO:*
-*Estilo de Gravação:* ${estiloGravacao}
-*Estilo de Locução:* ${estiloLocucaoFinal}
-*Tipo de Gravação:* ${tipoGravacao}
------------------------------------------
-*Instruções Adicionais:*
-${instrucoesLocucao || 'Nenhuma'}
------------------------------------------
-*VALOR TOTAL:* ${valorFormatado}
------------------------------------------
-${audioReferencia ? `*Áudio de referência:* Sim (será enviado separadamente)` : ''}
-
-*Status do Pagamento:* A realizar.
-    `.trim().replace(/^\s+/gm, '');
+    const orderData = {
+      userId: user.uid,
+      locutorId: locutorSelecionado.id,
+      locutorNome: locutorSelecionado.nome,
+      texto: textoCliente.trim(),
+      tempoEstimado: tempoEstimado,
+      estiloGravacao: estiloGravacao,
+      estiloLocucao: estiloLocucaoFinal,
+      tipoGravacao: tipoGravacao,
+      instrucoesAdicionais: instrucoesLocucao || 'Nenhuma',
+      valor: valorTotal,
+      status: 'pending', // 'pending', 'paid', 'completed'
+      createdAt: serverTimestamp(),
+      hasAudioReferencia: !!audioReferencia,
+    };
     
-    const numeroWhatsApp = "5591993584049";
-    const urlWhatsapp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
-    
-    window.open(paymentLink, '_blank');
-    
-    alert("Você será redirecionado para a página de pagamento. Após pagar, por favor, envie o comprovante e os detalhes do seu pedido pelo WhatsApp. Clique em 'OK' para prepararmos sua mensagem.");
-
-    window.open(urlWhatsapp, '_blank');
-
-    if (audioReferencia) {
-        alert("Não se esqueça de anexar o arquivo de áudio de referência na conversa do WhatsApp!");
+    try {
+      const ordersColRef = collection(firestore, 'users', user.uid, 'orders');
+      const docRef = await addDocumentNonBlocking(ordersColRef, orderData);
+      
+      // TODO: Handle audio upload to Firebase Storage if audioReferencia exists
+      
+      alert('Pedido criado com sucesso! Em breve, você será redirecionado para o pagamento.');
+      // Next step: Show QR code modal using the created order ID (docRef.id)
+      
+    } catch (error) {
+      console.error("Erro ao criar o pedido: ", error);
+      alert("Ocorreu um erro ao criar seu pedido. Por favor, tente novamente.");
     }
   };
 
@@ -374,9 +381,9 @@ ${audioReferencia ? `*Áudio de referência:* Sim (será enviado separadamente)`
           </section>
 
           <section className="text-center">
-            <Button size="lg" onClick={handlePaymentAndOrder} className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6">
+            <Button size="lg" onClick={handlePaymentAndOrder} className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6" disabled={isUserLoading}>
               <CreditCard className="mr-3 h-5 w-5" />
-              Realizar Pagamento e Enviar Pedido
+              {isUserLoading ? 'Carregando...' : 'Realizar Pagamento e Enviar Pedido'}
             </Button>
           </section>
         </main>
