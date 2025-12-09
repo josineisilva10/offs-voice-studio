@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle } from 'lucide-react';
+import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, CreditCard } from 'lucide-react';
 
 // Dados dos locutores
 const locutores = [
@@ -73,6 +73,7 @@ export default function Home() {
   const handlePlay = (demoUrl: string) => {
     if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = '';
         audioRef.current = null;
     }
     const newAudio = new Audio(demoUrl);
@@ -83,6 +84,7 @@ export default function Home() {
   const handleStop = () => {
     if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = '';
         audioRef.current = null;
     }
   };
@@ -140,7 +142,7 @@ export default function Home() {
     if(fileInput) fileInput.value = '';
   }
 
-  const handleEnviarWhatsApp = () => {
+  const handlePaymentAndOrder = () => {
     if (!locutorSelecionado) {
       alert('Por favor, selecione um locutor primeiro.');
       return;
@@ -156,6 +158,7 @@ export default function Home() {
 
     const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
     const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const paymentLink = "https://nubank.com.br/cobrar/10dn6x/693785f2-4097-42ea-854d-60b4561a9c64";
 
     const mensagem = `
 *NOVA SOLICITAÇÃO DE LOCUÇÃO*
@@ -174,20 +177,24 @@ ${textoCliente.trim()}
 *Instruções Adicionais:*
 ${instrucoesLocucao || 'Nenhuma'}
 -----------------------------------------
-*VALOR TOTAL ESTIMADO:* ${valorFormatado}
+*VALOR TOTAL:* ${valorFormatado}
 -----------------------------------------
 ${audioReferencia ? `*Áudio de referência:* Sim (será enviado separadamente)` : ''}
 
-Aguardando orçamento final.
+*Status do Pagamento:* A realizar.
     `.trim().replace(/^\s+/gm, '');
     
     const numeroWhatsApp = "5591993584049";
-    const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+    const urlWhatsapp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
     
-    window.open(url, '_blank');
+    window.open(paymentLink, '_blank');
+    
+    alert("Você será redirecionado para a página de pagamento. Após pagar, por favor, envie o comprovante e os detalhes do seu pedido pelo WhatsApp. Clique em 'OK' para prepararmos sua mensagem.");
+
+    window.open(urlWhatsapp, '_blank');
 
     if (audioReferencia) {
-        alert("Seu pedido foi preparado para o WhatsApp. Por favor, não se esqueça de anexar o arquivo de áudio de referência na conversa!");
+        alert("Não se esqueça de anexar o arquivo de áudio de referência na conversa do WhatsApp!");
     }
   };
 
@@ -368,9 +375,9 @@ Aguardando orçamento final.
           </section>
 
           <section className="text-center">
-            <Button size="lg" onClick={handleEnviarWhatsApp} className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6">
-              <Send className="mr-3 h-5 w-5" />
-              Solicitar pelo WhatsApp
+            <Button size="lg" onClick={handlePaymentAndOrder} className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6">
+              <CreditCard className="mr-3 h-5 w-5" />
+              Realizar Pagamento e Enviar Pedido
             </Button>
           </section>
         </main>
@@ -383,3 +390,5 @@ Aguardando orçamento final.
     </div>
   );
 }
+
+    
