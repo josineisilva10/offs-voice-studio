@@ -6,7 +6,7 @@ import { Providers } from "./providers";
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["300", "400", "600", "700"],
   variable: '--font-poppins',
 });
 const ptSans = PT_Sans({
@@ -30,7 +30,7 @@ export default function RootLayout({
     <html lang="pt-BR" className="h-full">
       <body 
         className={cn(
-          "h-full bg-[#F5F5F5] font-sans antialiased",
+          "h-full bg-background font-sans antialiased",
            poppins.variable, 
            ptSans.variable
         )}

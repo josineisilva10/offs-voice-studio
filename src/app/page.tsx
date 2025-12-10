@@ -302,14 +302,14 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">1. Escolha um Locutor</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {locutores.map((locutor) => (
-                <Card key={locutor.id} className={`bg-white border-gray-200 shadow-lg rounded-xl overflow-hidden transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-orange-500 ring-2 ring-orange-500' : 'hover:shadow-xl'}`}>
+                <Card key={locutor.id} className={`bg-white border-border shadow-lg rounded-xl overflow-hidden transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-orange-500 ring-2 ring-orange-500' : 'hover:shadow-xl'}`}>
                   <CardHeader>
                     <CardTitle className="text-xl text-[#1E3A8A]">{locutor.nome}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-col sm:flex-row gap-2">
                        <div className="flex-1 flex gap-2">
-                         <Button onClick={() => handlePlay(locutor.demoUrl)} variant="outline" className="flex-1">
+                         <Button onClick={() => handlePlay(locutor.demoUrl)} variant="outline" className="flex-1 border-primary text-primary">
                            <PlayCircle className="mr-2 h-4 w-4" /> 
                            Play
                          </Button>
@@ -333,19 +333,21 @@ export default function Home() {
           <section id="detalhes-secao">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">2. Detalhes da Gravação</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+              <Card className="bg-white border-border shadow-lg rounded-xl">
                 <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Estilo de Gravação</CardTitle></CardHeader>
                 <CardContent>
                   <RadioGroup value={estiloGravacao} onValueChange={setEstiloGravacao} className="space-y-2">
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Gravação Comercial" id="rg-comercial" /><Label htmlFor="rg-comercial">Gravação Comercial</Label></div>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="Gravação Comercial" id="rg-comercial" /><Label htmlFor="rg-comercial">Comercial</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Vinheta" id="rg-vinheta" /><Label htmlFor="rg-vinheta">Vinheta</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Chamada de Festa" id="rg-festa" /><Label htmlFor="rg-festa">Chamada de Festa</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Abertura" id="rg-abertura" /><Label htmlFor="rg-abertura">Abertura</Label></div>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="Spot" id="rg-spot" /><Label htmlFor="rg-spot">Spot</Label></div>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="Institucional" id="rg-institucional" /><Label htmlFor="rg-institucional">Institucional</Label></div>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="URA/Atendimento" id="rg-ura" /><Label htmlFor="rg-ura">URA / Atendimento</Label></div>
                   </RadioGroup>
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+              <Card className="bg-white border-border shadow-lg rounded-xl">
                 <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Estilo de Locução</CardTitle></CardHeader>
                 <CardContent>
                   <RadioGroup value={estiloLocucao} onValueChange={setEstiloLocucao} className="space-y-2">
@@ -353,6 +355,9 @@ export default function Home() {
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Impacto" id="rl-impacto" /><Label htmlFor="rl-impacto">Impacto</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Animado" id="rl-animado" /><Label htmlFor="rl-animado">Animado</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Varejo" id="rl-varejo" /><Label htmlFor="rl-varejo">Varejo</Label></div>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="Jovem" id="rl-jovem" /><Label htmlFor="rl-jovem">Jovem</Label></div>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="Caricata" id="rl-caricata" /><Label htmlFor="rl-caricata">Caricata</Label></div>
+                    <div className="flex items-center space-x-2"><RadioGroupItem value="Institucional/Sóbria" id="rl-institucional" /><Label htmlFor="rl-institucional">Institucional/Sóbria</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Outros" id="rl-outros" /><Label htmlFor="rl-outros">Outros</Label></div>
                   </RadioGroup>
                   {estiloLocucao === 'Outros' && (
@@ -361,7 +366,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+              <Card className="bg-white border-border shadow-lg rounded-xl">
                 <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Tipo da Gravação</CardTitle></CardHeader>
                 <CardContent>
                   <RadioGroup value={tipoGravacao} onValueChange={setTipoGravacao} className="space-y-2">
@@ -369,7 +374,7 @@ export default function Home() {
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Produzida (voz + trilha + efeitos)" id="tipo-produzida" /><Label htmlFor="tipo-produzida">Produzida (com trilha e efeitos)</Label></div>
                   </RadioGroup>
                   {tipoGravacao === 'Produzida (voz + trilha + efeitos)' && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="mt-4 pt-4 border-t border-border">
                       <Label htmlFor="trilha-upload" className="font-semibold text-gray-700">Trilha Sonora (Opcional)</Label>
                       <p className="text-gray-500 text-sm mb-2">Envie o arquivo de áudio da trilha.</p>
                       <Input 
@@ -394,7 +399,7 @@ export default function Home() {
 
           <section id="texto-cliente-secao">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">3. Insira seu Texto</h2>
-             <Card className="bg-white border-gray-200 shadow-lg rounded-xl p-6">
+             <Card className="bg-white border-border shadow-lg rounded-xl p-6">
                 {estiloGravacao === 'Vinheta' ? (
                   <div className="space-y-4">
                     <div>
@@ -431,7 +436,7 @@ export default function Home() {
           <section>
              <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">4. Instruções e Referências</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+                <Card className="bg-white border-border shadow-lg rounded-xl">
                   <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Instruções de Locução</CardTitle></CardHeader>
                   <CardContent>
                     <Textarea 
@@ -442,7 +447,7 @@ export default function Home() {
                     />
                   </CardContent>
                 </Card>
-                <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+                <Card className="bg-white border-border shadow-lg rounded-xl">
                   <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Áudio de Referência (Opcional)</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-gray-500 text-sm">Grave ou envie um áudio com o estilo desejado.</p>
@@ -485,7 +490,7 @@ export default function Home() {
 
           <section id="pagamento-secao">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">5. Orçamento e Pagamento</h2>
-            <Card className="bg-white border-gray-200 shadow-xl rounded-xl text-center max-w-2xl mx-auto">
+            <Card className="bg-white border-border shadow-xl rounded-xl text-center max-w-2xl mx-auto">
               <CardHeader>
                 <CardTitle className="text-2xl text-[#1E3A8A]">Orçamento Final</CardTitle>
               </CardHeader>
@@ -518,7 +523,7 @@ export default function Home() {
           <section id="tabela-precos-secao" className="mt-12">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">Tabela de Preços</h2>
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="bg-white border-gray-200 shadow-lg rounded-xl text-center">
+              <Card className="bg-white border-border shadow-lg rounded-xl text-center">
                 <CardHeader>
                   <CardTitle className="text-xl text-[#1E3A8A]">Locução OFF</CardTitle>
                   <p className="text-sm text-gray-500">(somente a voz)</p>
@@ -529,7 +534,7 @@ export default function Home() {
                   <p className="text-xs text-gray-400 mt-1">+ R$0,20 por segundo adicional</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border-gray-200 shadow-lg rounded-xl text-center">
+              <Card className="bg-white border-border shadow-lg rounded-xl text-center">
                 <CardHeader>
                   <CardTitle className="text-xl text-[#1E3A8A]">Locução Produzida</CardTitle>
                   <p className="text-sm text-gray-500">(voz + trilha + efeitos)</p>
@@ -545,7 +550,7 @@ export default function Home() {
 
         </main>
 
-        <footer className="text-center mt-16 py-8 border-t border-gray-200">
+        <footer className="text-center mt-16 py-8 border-t border-border">
           <p className="font-bold text-lg text-[#1E3A8A]">VozGenius</p>
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
           <div className="flex justify-center gap-4 mt-4">
