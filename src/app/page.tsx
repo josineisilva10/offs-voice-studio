@@ -193,7 +193,7 @@ export default function Home() {
 
     } catch (error) {
         console.error("Erro ao processar o pedido:", error);
-        router.push('/error?message=' + encodeURIComponent('Não foi possível criar seu pedido. Tente novamente.'));
+        alert('Não foi possível criar seu pedido. Tente novamente.');
     } finally {
         setIsSubmitting(false);
     }
@@ -420,7 +420,7 @@ export default function Home() {
                   <p className="text-sm text-gray-500">para textos de até 40 segundos.</p>
                    <p className="text-xs text-gray-400 mt-1">+ R$0,35 por segundo adicional</p>
                 </CardContent>
-              </Card>
+              </card>
             </div>
           </section>
 
@@ -431,7 +431,7 @@ export default function Home() {
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
           <div className="flex justify-center gap-4 mt-4">
              <Link href="/historico" className="text-blue-700 hover:text-orange-500">Meus Pedidos</Link>
-             <Link href="/login" className="text-blue-700 hover:text-orange-500">Admin</Link>
+             <Link href="/admin/login" className="text-blue-700 hover:text-orange-500">Admin</Link>
           </div>
         </footer>
       </div>
