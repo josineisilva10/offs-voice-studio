@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, Loader2 } from 'lucide-react';
+import { PlayCircle, Send, StopCircle, Loader2 } from 'lucide-react';
 import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -76,13 +76,7 @@ export default function Home() {
   const [estiloLocucaoOutro, setEstiloLocucaoOutro] = useState('');
   const [tipoGravacao, setTipoGravacao] = useState('');
   const [instrucoesLocucao, setInstrucoesLocucao] = useState('');
-  const [audioReferencia, setAudioReferencia] = useState<File | null>(null);
-  const [trilhaSonora, setTrilhaSonora] = useState<File | null>(null);
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordedAudioURL, setRecordedAudioURL] = useState<string | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const [musicaYoutube, setMusicaYoutube] = useState('');
 
   const [vinheta1, setVinheta1] = useState('');
   const [vinheta2, setVinheta2] = useState('');
@@ -158,70 +152,6 @@ export default function Home() {
     document.getElementById('detalhes-secao')?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      setAudioReferencia(file);
-      setRecordedAudioURL(URL.createObjectURL(file));
-    }
-  };
-
-  const handleTrilhaFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      setTrilhaSonora(file);
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audioFile = new File([audioBlob], 'gravacao_referencia.wav', { type: 'audio/wav' });
-        setRecordedAudioURL(audioUrl);
-        setAudioReferencia(audioFile);
-        audioChunksRef.current = [];
-      };
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-      setRecordedAudioURL(null);
-      setAudioReferencia(null);
-    } catch (err) {
-      console.error("Erro ao acessar o microfone:", err);
-      alert("Não foi possível acessar o microfone. Por favor, verifique as permissões do seu navegador.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const deleteAudio = () => {
-    setAudioReferencia(null);
-    setRecordedAudioURL(null);
-    const fileInput = document.getElementById('audio-upload') as HTMLInputElement;
-    if(fileInput) fileInput.value = '';
-  }
-
-  const uploadFile = async (file: File, path: string): Promise<string> => {
-    if (!firebaseApp) throw new Error("Firebase não foi inicializado.");
-    const storage = getStorage(firebaseApp);
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(storageRef);
-    return downloadURL;
-  };
-
-
   const handleSendWhatsApp = async () => {
     setIsSubmitting(true);
     try {
@@ -231,16 +161,6 @@ export default function Home() {
 
         const newOrderRef = doc(collection(firestore, `users/${user.uid}/orders`));
         const orderId = newOrderRef.id;
-
-        let audioReferenciaUrl = '';
-        if (audioReferencia) {
-            audioReferenciaUrl = await uploadFile(audioReferencia, `referencias/${user.uid}/${orderId}/${audioReferencia.name}`);
-        }
-        
-        let trilhaSonoraUrl = '';
-        if (trilhaSonora) {
-            trilhaSonoraUrl = await uploadFile(trilhaSonora, `trilhas/${user.uid}/${orderId}/${trilhaSonora.name}`);
-        }
 
         const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
         
@@ -263,22 +183,26 @@ export default function Home() {
             tempoEstimado,
             totalAmount: valorTotal,
             instrucoes: instrucoesLocucao,
-            audioReferenciaUrl: audioReferenciaUrl,
-            trilhaSonoraUrl: trilhaSonoraUrl,
+            musicaYoutube: musicaYoutube,
             status: 'pending' as 'pending' | 'completed',
         };
         
         await addDocumentNonBlocking(newOrderRef, orderData);
 
         // Montar a mensagem para o WhatsApp
-        const whatsAppMessage = `
+        let whatsAppMessage = `
 *Pedido de Locução*
 
 *Locutor:* ${locutorSelecionado?.nome}
 *Estilo de Gravação:* ${estiloGravacao}
 *Estilo de Locução:* ${estiloLocucaoFinal}
 *Tipo de Gravação:* ${tipoGravacao}
+`;
+        if (tipoGravacao === 'Produzida (voz + trilha + efeitos)' && musicaYoutube) {
+            whatsAppMessage += `*Música para produção:* ${musicaYoutube}\n`;
+        }
 
+        whatsAppMessage += `
 *Texto para Gravação:*
 ${textoCompletoParaDB}
 
@@ -435,7 +359,7 @@ ${instrucoesLocucao || 'Nenhuma'}
           
           <section>
              <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">4. Instruções e Referências</h2>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="space-y-8">
                 <Card className="bg-white border-border shadow-lg rounded-xl">
                   <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Instruções de Locução</CardTitle></CardHeader>
                   <CardContent>
@@ -447,44 +371,23 @@ ${instrucoesLocucao || 'Nenhuma'}
                     />
                   </CardContent>
                 </Card>
-                <Card className="bg-white border-border shadow-lg rounded-xl">
-                  <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Áudio de Referência (Opcional)</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-gray-500 text-sm">Grave ou envie um áudio com o estilo desejado.</p>
 
-                    <div className="flex flex-wrap gap-2">
-                       {!isRecording && (
-                        <Button onClick={startRecording} variant="destructive">
-                          <Mic className="mr-2 h-4 w-4" /> Gravar Áudio
-                        </Button>
-                      )}
-                      {isRecording && (
-                        <Button onClick={stopRecording} variant="secondary">
-                          <Square className="mr-2 h-4 w-4" /> Parar Gravação
-                        </Button>
-                      )}
-                      <Label htmlFor="audio-upload" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-[#1E3A8A] text-white hover:bg-blue-800 h-10 px-4 py-2 cursor-pointer">
-                        <FileAudio className="mr-2 h-4 w-4"/> Enviar Arquivo
-                      </Label>
-                      <Input id="audio-upload" type="file" accept="audio/*" onChange={handleFileChange} className="hidden"/>
-                    </div>
-                    
-                    {recordedAudioURL && (
-                      <div className="mt-4 p-3 bg-gray-100 rounded-lg">
-                        <p className="text-green-600 flex items-center mb-2 font-semibold">
-                          <FileAudio className="mr-2 h-4 w-4" />
-                          <span>{audioReferencia?.name} pronto.</span>
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <audio src={recordedAudioURL} controls className="w-full h-10" />
-                          <Button onClick={deleteAudio} variant="ghost" size="icon">
-                             <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                {tipoGravacao === 'Produzida (voz + trilha + efeitos)' && (
+                  <Card className="bg-white border-border shadow-lg rounded-xl">
+                    <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Link da Música (YouTube)</CardTitle></CardHeader>
+                    <CardContent>
+                        <Label htmlFor='musica-youtube' className="text-sm text-gray-500 mb-2 block">
+                            Cole aqui o link da música do YouTube ou escreva o nome da música que deseja usar na produção.
+                        </Label>
+                        <Input
+                            id="musica-youtube"
+                            placeholder="Ex: https://www.youtube.com/watch?v=... ou 'Nome da Música - Artista'"
+                            value={musicaYoutube}
+                            onChange={(e) => setMusicaYoutube(e.target.value)}
+                        />
+                    </CardContent>
+                  </Card>
+                )}
              </div>
           </section>
 

@@ -6,7 +6,7 @@ import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { FileAudio } from 'lucide-react';
+import { Music } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -19,8 +19,7 @@ interface Order {
   tempoEstimado: number;
   totalAmount: number;
   instrucoes: string;
-  audioReferenciaUrl?: string;
-  trilhaSonoraUrl?: string;
+  musicaYoutube?: string;
   status: 'pending' | 'completed';
 }
 
@@ -32,6 +31,16 @@ const OrderCard = ({ order }: { order: Order }) => {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  const isValidHttpUrl = (string: string) => {
+    let url;
+    try {
+      url = new URL(string);
+    } catch (_) {
+      return false;  
+    }
+    return url.protocol === "http:" || url.protocol === "https:";
+  }
 
   return (
     <Card className="bg-gray-800 border-gray-700 text-white">
@@ -72,25 +81,21 @@ const OrderCard = ({ order }: { order: Order }) => {
             <h4 className="font-semibold text-gray-300">Valor Total</h4>
             <p className="text-green-400 font-bold">{order.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
           </div>
-          <div>
-            <h4 className="font-semibold text-gray-300">Arquivos</h4>
-            <div className="flex flex-col space-y-2">
-              {order.audioReferenciaUrl ? (
-                <a href={order.audioReferenciaUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline flex items-center">
-                  <FileAudio className="mr-2 h-4 w-4" /> Ouvir Áudio de Referência
-                </a>
-              ) : (
-                <span className="text-gray-500">Sem áudio de referência</span>
-              )}
-              {order.trilhaSonoraUrl ? (
-                <a href={order.trilhaSonoraUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline flex items-center">
-                  <FileAudio className="mr-2 h-4 w-4" /> Ouvir Trilha Sonora
-                </a>
-              ) : (
-                 <span className="text-gray-500">Sem trilha sonora</span>
-              )}
+          {order.musicaYoutube && (
+             <div>
+                <h4 className="font-semibold text-gray-300">Música de Referência</h4>
+                <div className="flex items-center text-purple-400">
+                    <Music className="mr-2 h-4 w-4" />
+                     {isValidHttpUrl(order.musicaYoutube) ? (
+                        <a href={order.musicaYoutube} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">
+                            Ouvir no YouTube
+                        </a>
+                     ) : (
+                        <span className="text-gray-400 truncate">{order.musicaYoutube}</span>
+                     )}
+                </div>
             </div>
-          </div>
+          )}
         </div>
         {order.instrucoes && (
           <div>

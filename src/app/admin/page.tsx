@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { FileAudio, Loader2 } from 'lucide-react';
+import { Loader2, Music } from 'lucide-react';
 
 // IMPORTANTE: Substitua este UID pelo seu próprio UID de administrador do Firebase.
 const ADMIN_USER_ID = 'ColoqueSeuUIDDeAdminAqui';
@@ -25,8 +25,7 @@ interface Order {
   tempoEstimado: number;
   totalAmount: number;
   instrucoes: string;
-  audioReferenciaUrl?: string;
-  trilhaSonoraUrl?: string;
+  musicaYoutube?: string;
   status: 'pending' | 'completed';
 }
 
@@ -83,6 +82,16 @@ export default function AdminPage() {
     return <div className="text-center text-red-500 p-10">Erro ao carregar os pedidos: {error.message}</div>;
   }
 
+  const isValidHttpUrl = (string: string) => {
+    let url;
+    try {
+      url = new URL(string);
+    } catch (_) {
+      return false;  
+    }
+    return url.protocol === "http:" || url.protocol === "https:";
+  }
+
   return (
     <div className="text-white min-h-screen bg-gray-900">
        <div className="container mx-auto p-4 md:p-8">
@@ -119,8 +128,18 @@ export default function AdminPage() {
                                         <div className="text-xs text-gray-400">{order.tipoGravacao} | {order.estiloGravacao}</div>
                                         <p className="mt-2 text-gray-400 text-xs bg-gray-900 p-2 rounded whitespace-pre-wrap max-w-md">{order.texto}</p>
                                         <div className="flex space-x-4 mt-2">
-                                          {order.audioReferenciaUrl && <a href={order.audioReferenciaUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline text-xs flex items-center"><FileAudio className="mr-1 h-3 w-3" /> Ouvir Ref.</a>}
-                                          {order.trilhaSonoraUrl && <a href={order.trilhaSonoraUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline text-xs flex items-center"><FileAudio className="mr-1 h-3 w-3" /> Ouvir Trilha</a>}
+                                          {order.musicaYoutube && (
+                                            <div className="text-purple-400 text-xs flex items-center">
+                                                <Music className="mr-1 h-3 w-3" /> 
+                                                {isValidHttpUrl(order.musicaYoutube) ? (
+                                                    <a href={order.musicaYoutube} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                                        Ouvir Música
+                                                    </a>
+                                                ) : (
+                                                    <span>{order.musicaYoutube}</span>
+                                                )}
+                                            </div>
+                                          )}
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-green-400">{order.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
