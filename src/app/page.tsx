@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, ChangeEvent, useRef, useEffect } from 'react';
@@ -9,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle } from 'lucide-react';
-import { useFirebase, useUser, initiateAnonymousSignIn } from '@/firebase';
+import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 
 // Dados dos locutores
@@ -92,7 +92,7 @@ export default function Home() {
   // Estado para o valor total
   const [valorTotal, setValorTotal] = useState(0);
 
-  const { auth } = useFirebase();
+  const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
@@ -219,6 +219,7 @@ export default function Home() {
     const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     let textoParaGravacao = '';
+    let textoCompletoParaDB = '';
     if (estiloGravacao === 'Vinheta') {
       textoParaGravacao = `
 *TEXTO PARA GRAVAÇÃO (VINHETAS):*
@@ -226,11 +227,33 @@ export default function Home() {
 *Vinheta 2:* "${vinheta2 || 'Não preenchida'}"
 *Vinheta 3:* "${vinheta3 || 'Não preenchida'}"
 `;
+      textoCompletoParaDB = `Vinheta 1: ${vinheta1} | Vinheta 2: ${vinheta2} | Vinheta 3: ${vinheta3}`;
     } else {
       textoParaGravacao = `
 *TEXTO PARA GRAVAÇÃO:*
 "${textoCliente.trim()}"
 `;
+      textoCompletoParaDB = textoCliente.trim();
+    }
+
+    if (user && firestore) {
+      const orderData = {
+        userId: user.uid,
+        orderDate: new Date().toISOString(),
+        locutor: locutorSelecionado?.nome,
+        estiloGravacao,
+        estiloLocucao: estiloLocucaoFinal,
+        tipoGravacao,
+        texto: textoCompletoParaDB,
+        tempoEstimado,
+        totalAmount: valorTotal,
+        instrucoes: instrucoesLocucao,
+        temAudioReferencia: !!audioReferencia,
+        temTrilhaSonora: !!trilhaSonora,
+        status: 'pending',
+      };
+      // Note: We are using non-blocking updates, so we don't await this.
+      addDocumentNonBlocking(collection(firestore, `users/${user.uid}/orders`), orderData);
     }
 
     const message = `
@@ -534,6 +557,7 @@ ${trilhaSonora ? `\n(O cliente enviou uma trilha sonora: ${trilhaSonora.name})` 
         <footer className="text-center mt-12 py-6 border-t border-gray-800">
           <p className="font-bold text-lg">Neyzinho das Produções</p>
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
+          <a href="/historico" className="text-purple-400 hover:text-purple-300 mt-2 inline-block">Histórico de Pedidos</a>
         </footer>
       </div>
     </div>
