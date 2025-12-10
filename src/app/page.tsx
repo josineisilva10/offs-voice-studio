@@ -154,53 +154,51 @@ export default function Home() {
   const handleSendOrder = async () => {
     setIsSubmitting(true);
     try {
-        if (!user || !firestore) {
-            throw new Error('Usuário ou Firestore não disponível.');
-        }
-
-        const newOrderRef = doc(collection(firestore, "orders"));
-        const orderId = newOrderRef.id;
-
-        const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
-        
-        let textoCompletoParaDB = '';
-        if (estiloGravacao === 'Vinheta') {
-            textoCompletoParaDB = `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}`;
-        } else {
-            textoCompletoParaDB = textoCliente.trim();
-        }
-
-        const orderData = {
-            id: orderId,
-            userId: user.uid,
-            orderDate: new Date().toISOString(),
-            locutor: locutorSelecionado?.nome,
-            estiloGravacao,
-            estiloLocucao: estiloLocucaoFinal,
-            tipoGravacao,
-            texto: textoCompletoParaDB,
-            tempoEstimado,
-            totalAmount: valorTotal,
-            instrucoes: instrucoesLocucao,
-            musicaYoutube: musicaYoutube,
-            status: 'pending' as 'pending' | 'completed',
-        };
-        
-        await setDoc(newOrderRef, orderData);
-
-        router.push(`/checkout/${orderId}`);
-
-
+      if (!user || !firestore) {
+        throw new Error('Usuário ou Firestore não disponível.');
+      }
+  
+      const newOrderRef = doc(collection(firestore, "orders"));
+      const orderId = newOrderRef.id;
+  
+      const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
+      
+      let textoCompletoParaDB = '';
+      if (estiloGravacao === 'Vinheta') {
+        textoCompletoParaDB = `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}`;
+      } else {
+        textoCompletoParaDB = textoCliente.trim();
+      }
+  
+      const orderData = {
+        id: orderId,
+        userId: user.uid,
+        orderDate: new Date().toISOString(),
+        locutor: locutorSelecionado?.nome,
+        estiloGravacao,
+        estiloLocucao: estiloLocucaoFinal,
+        tipoGravacao,
+        texto: textoCompletoParaDB,
+        tempoEstimado,
+        totalAmount: valorTotal,
+        instrucoes: instrucoesLocucao,
+        musicaYoutube: musicaYoutube,
+        status: 'pending' as 'pending' | 'completed',
+      };
+      
+      await setDoc(newOrderRef, orderData);
+  
+      router.push(`/checkout/${orderId}`);
+  
     } catch (error) {
-        console.error("Erro ao processar o pedido:", error);
-        alert('Não foi possível criar seu pedido. Tente novamente.');
+      console.error("Erro ao processar o pedido:", error);
+      alert('Não foi possível criar seu pedido. Tente novamente.');
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  const isTextProvided = estiloGravacao === 'Vinheta' ? (vinheta1 || vinheta2 || vinheta3) : textoCliente;
-  const isOrderReady = valorTotal > 0 && locutorSelecionado && isTextProvided && estiloGravacao && estiloLocucao && tipoGravacao;
+  const isOrderReady = valorTotal > 0 && locutorSelecionado && textoCompleto.trim() !== '' && estiloGravacao && estiloLocucao && tipoGravacao;
 
   return (
     <div className="bg-[#F5F5F5] text-gray-800 min-h-screen">
@@ -431,7 +429,6 @@ export default function Home() {
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
           <div className="flex justify-center gap-4 mt-4">
              <Link href="/historico" className="text-blue-700 hover:text-orange-500">Meus Pedidos</Link>
-             <Link href="/admin/login" className="text-blue-700 hover:text-orange-500">Admin</Link>
           </div>
         </footer>
       </div>

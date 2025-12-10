@@ -53,15 +53,5 @@ service cloud.firestore {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
-
-    // Coleção para todos os pedidos, visível apenas pelo administrador.
-    match /all-orders/{orderId} {
-        // Clientes podem criar pedidos, mas não podem ler, atualizar ou deletar.
-        allow create: if isSignedIn();
-        // O administrador pode ler a lista de todos os pedidos.
-        allow read, list: if isAdmin();
-        // Ninguém pode atualizar ou deletar diretamente pela regra.
-        allow update, delete: if false;
-    }
   }
 }
