@@ -54,8 +54,8 @@ export default function CheckoutPage() {
   },[orderData, user]);
 
 
-  const handleGeneratePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGeneratePayment = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!orderData || !user || orderData.userId !== user.uid) {
         setError('Não foi possível verificar o pedido. Tente novamente.');
         return;
@@ -91,7 +91,6 @@ export default function CheckoutPage() {
     } catch (err: any) {
       console.error(err);
       setError('Falha ao gerar o pagamento. Verifique os dados e tente novamente.');
-      // router.push('/error?message=' + encodeURIComponent(err.message || 'Erro desconhecido.'));
     } finally {
       setIsLoading(false);
     }
@@ -125,14 +124,17 @@ export default function CheckoutPage() {
             setCustomerInfo(info);
             // Auto-trigger payment generation if we have the data and it hasn't been generated yet
             if (!paymentInfo) {
-                const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-                handleGeneratePayment(fakeEvent);
+                // IIFE to call async function correctly
+                (async () => {
+                    await handleGeneratePayment();
+                })();
             }
         } else {
             setIsLoading(false);
         }
     }
-  }, [orderData, isOrderLoading, orderError, error]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderData, isOrderLoading, orderError]);
 
 
   if (isLoading || isOrderLoading) {
@@ -211,3 +213,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+    
