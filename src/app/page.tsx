@@ -233,11 +233,11 @@ export default function Home() {
         const orderId = newOrderRef.id;
 
         let audioReferenciaUrl = '';
-        let trilhaSonoraUrl = '';
-
         if (audioReferencia) {
             audioReferenciaUrl = await uploadFile(audioReferencia, `referencias/${user.uid}/${orderId}/${audioReferencia.name}`);
         }
+        
+        let trilhaSonoraUrl = '';
         if (trilhaSonora) {
             trilhaSonoraUrl = await uploadFile(trilhaSonora, `trilhas/${user.uid}/${orderId}/${trilhaSonora.name}`);
         }
@@ -246,7 +246,7 @@ export default function Home() {
         
         let textoCompletoParaDB = '';
         if (estiloGravacao === 'Vinheta') {
-            textoCompletoParaDB = `Vinheta 1: ${vinheta1} | Vinheta 2: ${vinheta2} | Vinheta 3: ${vinheta3}`;
+            textoCompletoParaDB = `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}`;
         } else {
             textoCompletoParaDB = textoCliente.trim();
         }
@@ -508,7 +508,7 @@ ${instrucoesLocucao || 'Nenhuma'}
           </section>
 
           <section id="pagamento-secao">
-            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">5. Orçamento e Pagamento</h2>
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">5. Orçamento e Envio</h2>
             <Card className="bg-white border-border shadow-xl rounded-xl text-center max-w-2xl mx-auto">
               <CardHeader>
                 <CardTitle className="text-2xl text-[#1E3A8A]">Orçamento Final</CardTitle>
