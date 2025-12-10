@@ -11,6 +11,7 @@ import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, Loader2 }
 import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import Link from 'next/link';
 
 
 // Dados dos locutores
@@ -303,9 +304,6 @@ Olá! Gostaria de solicitar uma locução.
 ${textoParaGravacao}
 *INSTRUÇÕES ADICIONAIS:*
 "${instrucoesLocucao || 'Nenhuma'}"
-
-${audioReferenciaUrl ? `*Áudio de Referência:* ${audioReferenciaUrl}` : ''}
-${trilhaSonoraUrl ? `*Trilha Sonora:* ${trilhaSonoraUrl}` : ''}
 `;
 
         const encodedMessage = encodeURIComponent(message.trim());
@@ -598,7 +596,7 @@ ${trilhaSonoraUrl ? `*Trilha Sonora:* ${trilhaSonoraUrl}` : ''}
         <footer className="text-center mt-12 py-6 border-t border-gray-800">
           <p className="font-bold text-lg">Neyzinho das Produções</p>
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
-          <a href="/historico" className="text-purple-400 hover:text-purple-300 mt-2 inline-block">Histórico de Pedidos</a>
+          <Link href="/historico" className="text-purple-400 hover:text-purple-300 mt-2 inline-block">Histórico de Pedidos</Link>
         </footer>
       </div>
     </div>

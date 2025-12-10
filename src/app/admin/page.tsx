@@ -119,8 +119,8 @@ export default function AdminPage() {
                                         <div className="text-xs text-gray-400">{order.tipoGravacao} | {order.estiloGravacao}</div>
                                         <p className="mt-2 text-gray-400 text-xs bg-gray-900 p-2 rounded whitespace-pre-wrap max-w-md">{order.texto}</p>
                                         <div className="flex space-x-4 mt-2">
-                                          {order.audioReferenciaUrl && <a href={order.audioReferenciaUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline text-xs flex items-center"><FileAudio className="mr-1 h-3 w-3" /> Ref.</a>}
-                                          {order.trilhaSonoraUrl && <a href={order.trilhaSonoraUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline text-xs flex items-center"><FileAudio className="mr-1 h-3 w-3" /> Trilha</a>}
+                                          {order.audioReferenciaUrl && <a href={order.audioReferenciaUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline text-xs flex items-center"><FileAudio className="mr-1 h-3 w-3" /> Ouvir Ref.</a>}
+                                          {order.trilhaSonoraUrl && <a href={order.trilhaSonoraUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline text-xs flex items-center"><FileAudio className="mr-1 h-3 w-3" /> Ouvir Trilha</a>}
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-green-400">{order.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
