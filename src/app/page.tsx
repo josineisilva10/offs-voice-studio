@@ -392,25 +392,6 @@ ${instrucoesLocucao || 'Nenhuma'}
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Off (somente voz)" id="tipo-off" /><Label htmlFor="tipo-off">Off (somente voz)</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Produzida (voz + trilha + efeitos)" id="tipo-produzida" /><Label htmlFor="tipo-produzida">Produzida (com trilha e efeitos)</Label></div>
                   </RadioGroup>
-                  {tipoGravacao === 'Produzida (voz + trilha + efeitos)' && (
-                    <div className="mt-4 pt-4 border-t border-border">
-                      <Label htmlFor="trilha-upload" className="font-semibold text-gray-700">Trilha Sonora (Opcional)</Label>
-                      <p className="text-gray-500 text-sm mb-2">Envie o arquivo de áudio da trilha.</p>
-                      <Input 
-                        id="trilha-upload" 
-                        type="file" 
-                        accept="audio/*" 
-                        onChange={handleTrilhaFileChange} 
-                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
-                      />
-                       {trilhaSonora && (
-                        <div className="mt-2 text-green-600 text-xs flex items-center">
-                          <FileAudio className="mr-2 h-3 w-3" />
-                          <span>{trilhaSonora.name}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
