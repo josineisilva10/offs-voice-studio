@@ -1,33 +1,3 @@
-/**
- * Core Philosophy: This ruleset enforces a strict user-ownership model. All user-generated
- * content (like recordings, orders, and payment transactions) is stored within a private
- * data tree under that user's unique ID, ensuring that only the authenticated owner can
- * access or modify their own information.
- *
- * Data Structure: The data is organized hierarchically. A top-level `/users/{userId}`
- * collection serves as the root for all private user data. User-specific subcollections
- * like `recordings` and `orders` are nested within each user's document path. A separate
- * top-level collection, `/packages`, stores public, read-only data that is accessible
- * to all clients.
- *
- * Key Security Decisions:
- * - User Enumeration is Disabled: Listing documents in the top-level `/users` collection is
- *   explicitly forbidden to protect user privacy.
- * - Strict Ownership: All create, update, and delete operations on user-owned data require
- *   the request to be authenticated with a matching user ID.
- * - Public Read-Only Data: The `/packages` collection is publicly readable by anyone
- *   (including unauthenticated users) but is locked down to prevent any client-side writes.
- *   This data should be managed by a trusted backend or the Firebase Console.
- *
- * Denormalization for Authorization: To ensure fast and simple security rules, ownership
- * data is denormalized. For example, `Recording` and `Order` documents contain a `userId`
- * field. This allows rules to authorize access by checking a field on the document itself,
- * avoiding slow and costly `get()` calls to parent documents.
- *
- * Structural Segregation: Private user data (e.g., `/users/{userId}/recordings`) is stored
- * in separate collections from public data (e.g., `/packages`). This physical separation provides
- * a strong security boundary and improves query performance.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -36,114 +6,52 @@ service cloud.firestore {
     // Helper Functions
     // ------------------------------------------------------------------------
 
-    /**
-     * Verifies that a user is signed into the application.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Verifies that the currently signed-in user's UID matches the requested userId.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+    
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == "josineisilva2@gmail.com";
+    }
 
-    /**
-     * Verifies ownership and ensures the document already exists.
-     * Crucial for secure update and delete operations.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-    
-    /**
-     * Verifies ownership of a parent order document for securing nested subcollections.
-     * Uses a 'get' call to check the parent document's 'userId' field.
-     */
-    function isOwnerOfOrder(userId, orderId) {
-      let parentOrder = get(/databases/$(database)/documents/users/$(userId)/orders/$(orderId));
-      return isOwner(userId) && parentOrder.data.userId == userId;
-    }
-    
     // ------------------------------------------------------------------------
     // Collection Rules
     // ------------------------------------------------------------------------
     
-    /**
-     * @description Manages user profile data.
-     * @path /users/{userId}
-     * @allow (create) An authenticated user can create their own user document.
-     * @deny  (list) A user cannot list all other users in the system.
-     * @principle Restricts access to a user's own data tree and prevents user enumeration.
-     */
+    // A coleção de usuários ainda pode ser útil para dados de perfil no futuro.
+    // As regras atuais permitem que um usuário gerencie apenas seu próprio documento.
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
+      allow read, update: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if false;
-
-      /**
-       * @description Stores voice recordings created by a user.
-       * @path /users/{userId}/recordings/{recordingId}
-       * @allow (create) An authenticated user can create a recording in their own subcollection.
-       * @deny  (update) A user cannot update a recording belonging to another user.
-       * @principle Enforces document ownership for all operations within a user's private subcollection.
-       */
-      match /recordings/{recordingId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      /**
-       * @description Stores orders placed by a user for credit packages.
-       * @path /users/{userId}/orders/{orderId}
-       * @allow (list) An authenticated user can list their own past orders.
-       * @deny  (get) An anonymous user cannot read any user's order details.
-       * @principle Enforces document ownership for all operations within a user's private subcollection.
-       */
-      match /orders/{orderId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
-
-        /**
-         * @description Stores payment transaction details for a specific order.
-         * @path /users/{userId}/orders/{orderId}/paymentTransactions/{paymentTransactionId}
-         * @allow (get) An authenticated user can read a transaction if they own the parent order.
-         * @deny  (create) A user cannot create a transaction under another user's order.
-         * @principle Secures a nested subcollection by verifying ownership of the parent document.
-         */
-        match /paymentTransactions/{paymentTransactionId} {
-          allow get: if isOwnerOfOrder(userId, orderId);
-          allow list: if isOwnerOfOrder(userId, orderId);
-          allow create: if isOwnerOfOrder(userId, orderId) && request.resource.data.orderId == orderId;
-          allow update: if isOwnerOfOrder(userId, orderId) && resource != null && request.resource.data.orderId == resource.data.orderId;
-          allow delete: if isOwnerOfOrder(userId, orderId) && resource != null;
-        }
-      }
+      // Proibir listagem e exclusão por clientes.
+      allow list, delete: if false; 
     }
 
-    /**
-     * @description Stores credit packages available for purchase. This data is public.
-     * @path /packages/{packageId}
-     * @allow (get, list) Any user, including unauthenticated ones, can view available packages.
-     * @deny  (create, update, delete) No client is allowed to modify the package list.
-     * @principle Provides public read access while preventing all client-side write operations.
-     */
+    // Coleção global de pedidos.
+    match /orders/{orderId} {
+      // O admin pode fazer qualquer coisa com qualquer pedido.
+      allow read, list, create, update, delete: if isAdmin();
+      
+      // Um usuário comum (cliente) pode:
+      // - Ler um pedido se o 'userId' no documento corresponder ao seu UID.
+      // - Listar (consultar) apenas os pedidos que pertencem a ele.
+      // - Criar um pedido se o 'userId' no novo documento for o seu próprio UID.
+      allow get: if isOwner(request.resource.data.userId);
+      allow list: if isSignedIn() && request.query.where.size() > 0 && request.query.where[0].field == 'userId' && request.query.where[0].value == request.auth.uid;
+      allow create: if isOwner(request.resource.data.userId);
+      
+      // Clientes não podem atualizar ou excluir pedidos diretamente.
+      allow update, delete: if false;
+    }
+    
+    // Coleção de pacotes permanece pública para leitura, mas bloqueada para escrita.
     match /packages/{packageId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
   }
 }

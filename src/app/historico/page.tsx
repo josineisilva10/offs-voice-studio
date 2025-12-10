@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { useFirebase, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Music } from 'lucide-react';
+import { Music, Loader2 } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -32,7 +32,8 @@ const OrderCard = ({ order }: { order: Order }) => {
     minute: '2-digit',
   });
 
-  const isValidHttpUrl = (string: string) => {
+  const isValidHttpUrl = (string: string | undefined) => {
+    if (!string) return false;
     let url;
     try {
       url = new URL(string);
@@ -43,14 +44,14 @@ const OrderCard = ({ order }: { order: Order }) => {
   }
 
   return (
-    <Card className="bg-gray-800 border-gray-700 text-white">
+    <Card className="bg-gray-800 border-gray-700 text-white shadow-lg">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-xl">Pedido de {order.locutor}</CardTitle>
+            <CardTitle className="text-xl font-bold text-white">Pedido de {order.locutor}</CardTitle>
             <CardDescription className="text-gray-400">{formattedDate}</CardDescription>
           </div>
-          <Badge variant={order.status === 'pending' ? 'destructive' : 'default'}>
+          <Badge variant={order.status === 'pending' ? 'destructive' : 'default'} className="bg-opacity-80">
             {order.status === 'pending' ? 'Pendente' : 'Feito'}
           </Badge>
         </div>
@@ -58,7 +59,7 @@ const OrderCard = ({ order }: { order: Order }) => {
       <CardContent className="space-y-4">
         <div>
           <h4 className="font-semibold text-gray-300">Texto para Gravação:</h4>
-          <p className="text-gray-400 bg-gray-900 p-3 rounded-md whitespace-pre-wrap">{order.texto || 'N/A'}</p>
+          <p className="text-gray-400 bg-gray-900 p-3 rounded-md whitespace-pre-wrap text-sm">{order.texto || 'N/A'}</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div>
@@ -100,7 +101,7 @@ const OrderCard = ({ order }: { order: Order }) => {
         {order.instrucoes && (
           <div>
             <h4 className="font-semibold text-gray-300">Instruções Adicionais:</h4>
-            <p className="text-gray-400">{order.instrucoes}</p>
+            <p className="text-gray-400 text-sm">{order.instrucoes}</p>
           </div>
         )}
       </CardContent>
@@ -115,25 +116,33 @@ export default function HistoricoPage() {
 
   const ordersQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
+    // Consulta a coleção global 'orders', filtrando pelo 'userId' do usuário logado.
     return query(
-      collection(firestore, `users/${user.uid}/orders`),
+      collection(firestore, 'orders'),
+      where('userId', '==', user.uid),
       orderBy('orderDate', 'desc')
     );
   }, [user, firestore]);
 
   const { data: orders, isLoading, error } = useCollection<Order>(ordersQuery);
 
-  if (isUserLoading || isLoading) {
-    return <div className="text-center text-white p-10">Carregando histórico...</div>;
+  if (isUserLoading || (!orders && isLoading)) {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+            <Loader2 className="h-12 w-12 animate-spin text-purple-400" />
+            <p className="mt-4">Carregando histórico de pedidos...</p>
+        </div>
+    );
   }
 
   if (!user) {
     return (
-      <div className="text-center text-white p-10">
-        <p>Você precisa estar logado para ver o histórico.</p>
+      <div className="text-center text-white p-10 bg-gray-900 min-h-screen flex flex-col justify-center">
+        <h2 className="text-2xl font-bold mb-4">Acesso Negado</h2>
+        <p>Você precisa estar logado para ver seu histórico de pedidos.</p>
         <p className="text-sm text-gray-400">(O login é automático e anônimo ao visitar a página principal)</p>
-        <Link href="/" className="text-purple-400 hover:underline mt-4 inline-block">
-          Voltar para a página principal
+        <Link href="/" className="text-purple-400 hover:underline mt-6 inline-block">
+          Ir para a Página Principal
         </Link>
       </div>
     );
@@ -143,19 +152,18 @@ export default function HistoricoPage() {
     return <div className="text-center text-red-500 p-10">Erro ao carregar o histórico: {error.message}</div>;
   }
   
-
   return (
-    <div className="text-white min-h-screen">
+    <div className="text-white min-h-screen bg-gray-900">
        <div className="container mx-auto p-4 md:p-8">
          <header className="text-center my-8 md:my-12">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                Histórico de Pedidos
+                Meus Pedidos
             </h1>
             <p className="text-lg text-gray-300 mt-2">
-                Todos os pedidos recebidos, do mais recente ao mais antigo.
+                Acompanhe todos os seus pedidos de locução.
             </p>
             <Link href="/" className="text-purple-400 hover:underline mt-4 inline-block">
-                ← Voltar para a página principal
+                ← Fazer um novo pedido
             </Link>
          </header>
 
@@ -163,8 +171,14 @@ export default function HistoricoPage() {
             {orders && orders.length > 0 ? (
                 orders.map(order => <OrderCard key={order.id} order={order} />)
             ) : (
-                <div className="text-center text-gray-400 p-10 bg-gray-800 rounded-lg">
-                    <p>Nenhum pedido encontrado ainda.</p>
+                <div className="text-center text-gray-400 p-10 bg-gray-800 rounded-lg shadow-lg">
+                    <h3 className="text-xl font-semibold">Nenhum Pedido Encontrado</h3>
+                    <p className="mt-2">Você ainda não fez nenhum pedido de locução.</p>
+                    <Link href="/" passHref>
+                        <Button className="mt-4 bg-purple-600 hover:bg-purple-700">
+                            Criar meu primeiro pedido
+                        </Button>
+                    </Link>
                 </div>
             )}
         </main>

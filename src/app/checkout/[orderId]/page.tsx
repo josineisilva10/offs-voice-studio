@@ -16,7 +16,6 @@ interface Order {
   orderDate: string;
   locutor: string;
   totalAmount: number;
-  // customer data
   customerName?: string;
   customerEmail?: string;
   customerCpf?: string;
@@ -28,7 +27,7 @@ export default function CheckoutPage() {
   const orderId = params.orderId as string;
 
   const { firestore } = useFirebase();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
 
   const [paymentInfo, setPaymentInfo] = useState<GeneratePaymentOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,22 +36,33 @@ export default function CheckoutPage() {
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', cpf: '' });
   const [isCustomerInfoSet, setIsCustomerInfoSet] = useState(false);
 
+  // A referência agora aponta para a coleção global 'orders'
   const orderRef = useMemoFirebase(() => {
-    if (!user || !firestore || !orderId) return null;
-    return doc(firestore, `users/${user.uid}/orders/${orderId}`);
-  }, [user, firestore, orderId]);
+    if (!firestore || !orderId) return null;
+    return doc(firestore, `orders/${orderId}`);
+  }, [firestore, orderId]);
 
-  const { data: orderData, isLoading: isOrderLoading } = useDoc<Order>(orderRef);
+  const { data: orderData, isLoading: isOrderLoading, error: orderError } = useDoc<Order>(orderRef);
+  
+  // Efeito para verificar se o usuário logado é o dono do pedido
+  useEffect(() => {
+    if (orderData && user && orderData.userId !== user.uid) {
+        setError('Acesso negado. Este pedido não pertence a você.');
+    }
+  },[orderData, user]);
+
 
   const handleGeneratePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderData || !user) return;
+    if (!orderData || !user || orderData.userId !== user.uid) {
+        setError('Não foi possível verificar o pedido. Tente novamente.');
+        return;
+    }
     
     setIsLoading(true);
     setError(null);
     
     try {
-      // Save customer info to the order
       await updateDoc(orderRef!, {
         customerName: customerInfo.name,
         customerEmail: customerInfo.email,
@@ -73,15 +83,13 @@ export default function CheckoutPage() {
       const result = await generatePayment(paymentInput);
       setPaymentInfo(result);
       
-      // Update order with payment charge ID
       await updateDoc(orderRef!, { chargeId: result.chargeId });
-
       setIsCustomerInfoSet(true);
 
     } catch (err: any) {
       console.error(err);
       setError('Falha ao gerar o pagamento. Verifique os dados e tente novamente.');
-      router.push('/error?message=' + encodeURIComponent(err.message || 'Erro desconhecido.'));
+      // router.push('/error?message=' + encodeURIComponent(err.message || 'Erro desconhecido.'));
     } finally {
       setIsLoading(false);
     }
@@ -96,27 +104,33 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
+    const fullError = orderError ? orderError.message : (error || null);
+    if(fullError){
+        setError(fullError);
+        setIsLoading(false);
+        return;
+    }
     if (!isOrderLoading && !orderData) {
        setError('Pedido não encontrado.');
        setIsLoading(false);
     } else if (orderData) {
-        // If we have order data and customer info is filled, we can proceed
         if (orderData.customerName && orderData.customerEmail && orderData.customerCpf) {
-            setCustomerInfo({
+            const info = {
                 name: orderData.customerName,
                 email: orderData.customerEmail,
                 cpf: orderData.customerCpf,
-            });
-            // Auto-trigger payment generation if we have the data
+            };
+            setCustomerInfo(info);
+            // Auto-trigger payment generation if we have the data and it hasn't been generated yet
             if (!paymentInfo) {
-                handleGeneratePayment(new Event('submit') as any);
+                const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                handleGeneratePayment(fakeEvent);
             }
         } else {
-            // Need customer info
             setIsLoading(false);
         }
     }
-  }, [orderData, isOrderLoading]);
+  }, [orderData, isOrderLoading, orderError, error]);
 
 
   if (isLoading || isOrderLoading) {
@@ -130,10 +144,10 @@ export default function CheckoutPage() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F5F5F5]">
-        <h1 className="text-2xl font-bold text-red-600">Erro</h1>
-        <p className="mt-2 text-gray-600">{error}</p>
-        <Button onClick={() => router.push('/')} className="mt-4">Voltar para o início</Button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 p-4">
+        <h1 className="text-2xl font-bold text-red-600">Erro no Checkout</h1>
+        <p className="mt-2 text-gray-600 text-center max-w-md">{error}</p>
+        <Button onClick={() => router.push('/')} className="mt-4 bg-blue-600 hover:bg-blue-700">Voltar para o início</Button>
       </div>
     );
   }

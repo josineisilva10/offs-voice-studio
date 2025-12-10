@@ -1,22 +1,19 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useFirebase, useUser } from '@/firebase';
-import { collectionGroup, query, orderBy, doc, updateDoc } from 'firebase/firestore';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
+import { useFirebase, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Loader2, LogOut, Music, ShieldCheck, ShieldX } from 'lucide-react';
 import Link from 'next/link';
-import { Loader2, Music, LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
-// O e-mail do administrador que terá acesso a esta página.
+// Defina o e-mail do administrador
 const ADMIN_EMAIL = 'josineisilva2@gmail.com';
 
 interface Order {
-  id: string; // O ID do documento do Firestore
-  userId: string;
+  id: string;
   orderDate: string;
   locutor: string;
   estiloGravacao: string;
@@ -28,32 +25,68 @@ interface Order {
   instrucoes: string;
   musicaYoutube?: string;
   status: 'pending' | 'completed';
+  userId: string;
 }
 
+// Componente principal da página Admin
 export default function AdminPage() {
   const router = useRouter();
-  const { firestore, auth } = useFirebase();
   const { user, isUserLoading } = useUser();
+
+  // Se estiver carregando o usuário, mostre uma tela de "verificando acesso"
+  if (isUserLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+        <Loader2 className="h-12 w-12 animate-spin text-purple-400" />
+        <p className="mt-4">Verificando acesso...</p>
+      </div>
+    );
+  }
+
+  // Se não houver usuário, redirecione para o login
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+  
+  // Se o usuário não for o admin, mostre "Acesso Negado"
+  if (user.email !== ADMIN_EMAIL) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white text-center p-4">
+        <ShieldX className="h-16 w-16 text-red-500" />
+        <h1 className="text-3xl font-bold mt-4">Acesso Negado</h1>
+        <p className="text-gray-400 mt-2">Esta área é restrita aos administradores.</p>
+        <Link href="/" className="mt-6 text-blue-400 hover:underline">
+          Voltar para a Página Principal
+        </Link>
+      </div>
+    );
+  }
+
+  // Se for o admin, renderize o painel
+  return <AdminDashboard />;
+}
+
+
+// Componente que renderiza o painel de administração
+function AdminDashboard() {
+  const router = useRouter();
+  const { firestore, auth } = useFirebase();
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
+  // Consulta para buscar todos os documentos da coleção 'orders'
+  const ordersQuery = useMemoFirebase(() => {
+      if (!firestore) return null;
+      return query(collection(firestore, 'orders'), orderBy('orderDate', 'desc'));
+  }, [firestore]);
 
-  const allOrdersQuery = useMemo(() => {
-    if (!firestore || !isAdmin) return null;
-    return query(
-      collectionGroup(firestore, 'orders'),
-      orderBy('orderDate', 'desc')
-    );
-  }, [firestore, isAdmin]);
+  const { data: orders, isLoading, error } = useCollection<Order>(ordersQuery);
 
-  const { data: orders, isLoading, error } = useCollection<Order>(allOrdersQuery);
-
-  const handleUpdateStatus = async (order: Order, newStatus: 'pending' | 'completed') => {
-    if (!firestore || !isAdmin) return;
-
-    setUpdatingStatus(order.id);
+  const handleUpdateStatus = async (orderId: string, newStatus: 'pending' | 'completed') => {
+    if (!firestore) return;
+    setUpdatingStatus(orderId);
     try {
-      const orderRef = doc(firestore, `users/${order.userId}/orders/${order.id}`);
+      const orderRef = doc(firestore, 'orders', orderId);
       await updateDoc(orderRef, { status: newStatus });
     } catch (e) {
       console.error("Erro ao atualizar o status:", e);
@@ -67,35 +100,9 @@ export default function AdminPage() {
     await auth.signOut();
     router.push('/login');
   };
-
-  // Redireciona para o login se não estiver logado e o carregamento inicial já terminou
-  if (!isUserLoading && !user) {
-    router.push('/login');
-    return null; // Renderiza nada enquanto redireciona
-  }
   
-  if (isUserLoading || (user && !orders && isLoading)) {
-    return <div className="text-center text-white p-10">Carregando painel de administração...</div>;
-  }
-
-  // Mostra acesso negado se o usuário não for o administrador
-  if (!isUserLoading && !isAdmin) {
-    return (
-      <div className="text-center text-red-500 p-10">
-        <h1 className="text-3xl font-bold">Acesso Negado</h1>
-        <p className="mt-2">Esta página é restrita ao administrador.</p>
-        <Link href="/" className="text-purple-400 hover:underline mt-4 inline-block">
-          Voltar para a página principal
-        </Link>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return <div className="text-center text-red-500 p-10">Erro ao carregar os pedidos: {error.message}</div>;
-  }
-
   const isValidHttpUrl = (string: string) => {
+    if (!string) return false;
     let url;
     try {
       url = new URL(string);
@@ -105,20 +112,36 @@ export default function AdminPage() {
     return url.protocol === "http:" || url.protocol === "https:";
   }
 
+  if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+            <Loader2 className="h-12 w-12 animate-spin text-purple-400" />
+            <p className="mt-4">Carregando pedidos...</p>
+        </div>
+      );
+  }
+  
+  if (error) {
+    return <div className="text-center text-red-500 p-10">Erro ao carregar os pedidos: {error.message}</div>;
+  }
+
   return (
     <div className="text-white min-h-screen bg-gray-900">
        <div className="container mx-auto p-4 md:p-8">
          <header className="my-8 md:my-12">
             <div className="flex justify-between items-center">
-                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
-                    Painel do Administrador
-                </h1>
-                <Button onClick={handleLogout} variant="outline" size="sm">
+                <div className="flex items-center gap-4">
+                    <ShieldCheck className="h-12 w-12 text-green-400" />
+                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
+                        Painel do Administrador
+                    </h1>
+                </div>
+                <Button onClick={handleLogout} variant="outline" size="sm" className="bg-transparent border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sair
                 </Button>
             </div>
-            <p className="text-lg text-gray-400 mt-2 text-center">
+            <p className="text-lg text-gray-400 mt-2">
                 Histórico completo de todos os pedidos recebidos.
             </p>
          </header>
@@ -146,20 +169,18 @@ export default function AdminPage() {
                                         <div className="font-bold">{order.locutor}</div>
                                         <div className="text-xs text-gray-400">{order.tipoGravacao} | {order.estiloGravacao}</div>
                                         <p className="mt-2 text-gray-400 text-xs bg-gray-900 p-2 rounded whitespace-pre-wrap max-w-md">{order.texto}</p>
-                                        <div className="flex space-x-4 mt-2">
-                                          {order.musicaYoutube && (
-                                            <div className="text-purple-400 text-xs flex items-center">
-                                                <Music className="mr-1 h-3 w-3" /> 
+                                        {order.musicaYoutube && (
+                                            <div className="mt-2 text-purple-400 text-xs flex items-center gap-2">
+                                                <Music className="h-3 w-3 flex-shrink-0" /> 
                                                 {isValidHttpUrl(order.musicaYoutube) ? (
-                                                    <a href={order.musicaYoutube} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                                        Ouvir Música
+                                                    <a href={order.musicaYoutube} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">
+                                                        {order.musicaYoutube}
                                                     </a>
                                                 ) : (
-                                                    <span>{order.musicaYoutube}</span>
+                                                    <span className="truncate">{order.musicaYoutube}</span>
                                                 )}
                                             </div>
                                           )}
-                                        </div>
                                     </td>
                                     <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-green-400">{order.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                                     <td className="px-4 py-4 whitespace-nowrap">
@@ -170,16 +191,18 @@ export default function AdminPage() {
                                             <Button 
                                                 size="sm" 
                                                 variant="outline"
-                                                onClick={() => handleUpdateStatus(order, 'pending')} 
+                                                onClick={() => handleUpdateStatus(order.id, 'pending')} 
                                                 disabled={updatingStatus === order.id || order.status === 'pending'}
+                                                className="disabled:opacity-30"
                                             >
                                                 {updatingStatus === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Pendente'}
                                             </Button>
                                             <Button 
                                                 size="sm" 
                                                 variant="secondary"
-                                                onClick={() => handleUpdateStatus(order, 'completed')} 
+                                                onClick={() => handleUpdateStatus(order.id, 'completed')} 
                                                 disabled={updatingStatus === order.id || order.status === 'completed'}
+                                                className="disabled:opacity-30"
                                             >
                                                {updatingStatus === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Feito'}
                                             </Button>

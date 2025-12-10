@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, ChangeEvent, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,10 +10,7 @@ import { Input } from '@/components/ui/input';
 import { PlayCircle, Send, StopCircle, Loader2 } from 'lucide-react';
 import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
 
 // Dados dos locutores
 const locutores = [
@@ -66,7 +63,6 @@ const locutores = [
 ];
 
 export default function Home() {
-  const router = useRouter();
   const [textoCliente, setTextoCliente] = useState('');
   const [locutorSelecionado, setLocutorSelecionado] = useState<(typeof locutores[0]) | null>(null);
   
@@ -86,7 +82,7 @@ export default function Home() {
   const [valorTotal, setValorTotal] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { auth, firestore, firebaseApp } = useFirebase();
+  const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
@@ -160,7 +156,7 @@ export default function Home() {
             throw new Error('Usuário ou Firestore não disponível.');
         }
 
-        const newOrderRef = doc(collection(firestore, `users/${user.uid}/orders`));
+        const newOrderRef = doc(collection(firestore, `orders`));
         const orderId = newOrderRef.id;
 
         const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
@@ -175,6 +171,7 @@ export default function Home() {
         const orderData = {
             id: orderId,
             userId: user.uid,
+            customerName: user.displayName ?? "Cliente Anônimo",
             orderDate: new Date().toISOString(),
             locutor: locutorSelecionado?.nome,
             estiloGravacao,
@@ -459,7 +456,7 @@ ${instrucoesLocucao || 'Nenhuma'}
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
           <div className="flex justify-center gap-4 mt-4">
              <Link href="/historico" className="text-blue-700 hover:text-orange-500">Meus Pedidos</Link>
-             <Link href="/admin" className="text-blue-700 hover:text-orange-500">Admin</Link>
+             <Link href="/login" className="text-blue-700 hover:text-orange-500">Admin</Link>
           </div>
         </footer>
       </div>
