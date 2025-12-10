@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useFirebase, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { FileAudio } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -18,8 +19,8 @@ interface Order {
   tempoEstimado: number;
   totalAmount: number;
   instrucoes: string;
-  temAudioReferencia: boolean;
-  temTrilhaSonora: boolean;
+  audioReferenciaUrl?: string;
+  trilhaSonoraUrl?: string;
   status: string;
 }
 
@@ -71,13 +72,21 @@ const OrderCard = ({ order }: { order: Order }) => {
           </div>
           <div>
             <h4 className="font-semibold text-gray-300">Arquivos</h4>
-            <div className="flex flex-col">
-                <span className={`text-gray-400 ${order.temAudioReferencia ? 'text-green-400' : 'text-red-400'}`}>
-                    {order.temAudioReferencia ? '✓ Áudio de Referência' : '✗ Sem Áudio de Referência'}
-                </span>
-                <span className={`text-gray-400 ${order.temTrilhaSonora ? 'text-green-400' : 'text-red-400'}`}>
-                    {order.temTrilhaSonora ? '✓ Trilha Sonora' : '✗ Sem Trilha Sonora'}
-                </span>
+            <div className="flex flex-col space-y-2">
+              {order.audioReferenciaUrl ? (
+                <a href={order.audioReferenciaUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline flex items-center">
+                  <FileAudio className="mr-2 h-4 w-4" /> Ouvir Áudio de Referência
+                </a>
+              ) : (
+                <span className="text-gray-500">Sem áudio de referência</span>
+              )}
+              {order.trilhaSonoraUrl ? (
+                <a href={order.trilhaSonoraUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline flex items-center">
+                  <FileAudio className="mr-2 h-4 w-4" /> Ouvir Trilha Sonora
+                </a>
+              ) : (
+                 <span className="text-gray-500">Sem trilha sonora</span>
+              )}
             </div>
           </div>
         </div>

@@ -7,9 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle } from 'lucide-react';
+import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, Loader2 } from 'lucide-react';
 import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
 import { collection } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 
 // Dados dos locutores
@@ -92,7 +93,10 @@ export default function Home() {
   // Estado para o valor total
   const [valorTotal, setValorTotal] = useState(0);
 
-  const { auth, firestore } = useFirebase();
+  // Estado para o carregamento do envio
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { auth, firestore, firebaseApp } = useFirebase();
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
@@ -214,49 +218,73 @@ export default function Home() {
     if(fileInput) fileInput.value = '';
   }
 
-  const handleSendWhatsApp = () => {
-    const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
-    const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const uploadFile = async (file: File, path: string): Promise<string> => {
+    if (!firebaseApp) throw new Error("Firebase não foi inicializado.");
+    const storage = getStorage(firebaseApp);
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  };
 
-    let textoParaGravacao = '';
-    let textoCompletoParaDB = '';
-    if (estiloGravacao === 'Vinheta') {
-      textoParaGravacao = `
+
+  const handleSendWhatsApp = async () => {
+    setIsSubmitting(true);
+    try {
+        if (!user || !firestore) {
+            throw new Error('Usuário ou Firestore não disponível.');
+        }
+
+        const orderId = `${user.uid}-${Date.now()}`;
+        let audioReferenciaUrl = '';
+        let trilhaSonoraUrl = '';
+
+        if (audioReferencia) {
+            audioReferenciaUrl = await uploadFile(audioReferencia, `referencias/${user.uid}/${orderId}/${audioReferencia.name}`);
+        }
+        if (trilhaSonora) {
+            trilhaSonoraUrl = await uploadFile(trilhaSonora, `trilhas/${user.uid}/${orderId}/${trilhaSonora.name}`);
+        }
+
+        const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
+        const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        let textoParaGravacao = '';
+        let textoCompletoParaDB = '';
+        if (estiloGravacao === 'Vinheta') {
+            textoParaGravacao = `
 *TEXTO PARA GRAVAÇÃO (VINHETAS):*
 *Vinheta 1:* "${vinheta1 || 'Não preenchida'}"
 *Vinheta 2:* "${vinheta2 || 'Não preenchida'}"
 *Vinheta 3:* "${vinheta3 || 'Não preenchida'}"
 `;
-      textoCompletoParaDB = `Vinheta 1: ${vinheta1} | Vinheta 2: ${vinheta2} | Vinheta 3: ${vinheta3}`;
-    } else {
-      textoParaGravacao = `
+            textoCompletoParaDB = `Vinheta 1: ${vinheta1} | Vinheta 2: ${vinheta2} | Vinheta 3: ${vinheta3}`;
+        } else {
+            textoParaGravacao = `
 *TEXTO PARA GRAVAÇÃO:*
 "${textoCliente.trim()}"
 `;
-      textoCompletoParaDB = textoCliente.trim();
-    }
+            textoCompletoParaDB = textoCliente.trim();
+        }
 
-    if (user && firestore) {
-      const orderData = {
-        userId: user.uid,
-        orderDate: new Date().toISOString(),
-        locutor: locutorSelecionado?.nome,
-        estiloGravacao,
-        estiloLocucao: estiloLocucaoFinal,
-        tipoGravacao,
-        texto: textoCompletoParaDB,
-        tempoEstimado,
-        totalAmount: valorTotal,
-        instrucoes: instrucoesLocucao,
-        temAudioReferencia: !!audioReferencia,
-        temTrilhaSonora: !!trilhaSonora,
-        status: 'pending',
-      };
-      // Note: We are using non-blocking updates, so we don't await this.
-      addDocumentNonBlocking(collection(firestore, `users/${user.uid}/orders`), orderData);
-    }
+        const orderData = {
+            userId: user.uid,
+            orderDate: new Date().toISOString(),
+            locutor: locutorSelecionado?.nome,
+            estiloGravacao,
+            estiloLocucao: estiloLocucaoFinal,
+            tipoGravacao,
+            texto: textoCompletoParaDB,
+            tempoEstimado,
+            totalAmount: valorTotal,
+            instrucoes: instrucoesLocucao,
+            audioReferenciaUrl: audioReferenciaUrl,
+            trilhaSonoraUrl: trilhaSonoraUrl,
+            status: 'pending',
+        };
+        addDocumentNonBlocking(collection(firestore, `users/${user.uid}/orders`), orderData);
 
-    const message = `
+        const message = `
 Olá! Gostaria de solicitar uma locução.
 
 *RESUMO DO PEDIDO:*
@@ -272,14 +300,20 @@ ${textoParaGravacao}
 *INSTRUÇÕES ADICIONAIS:*
 "${instrucoesLocucao || 'Nenhuma'}"
 
-${audioReferencia ? `\n(Enviei também um áudio de referência: ${audioReferencia.name})` : ''}
-${trilhaSonora ? `\n(O cliente enviou uma trilha sonora: ${trilhaSonora.name})` : ''}
+${audioReferenciaUrl ? `*Áudio de Referência:* ${audioReferenciaUrl}` : ''}
+${trilhaSonoraUrl ? `*Trilha Sonora:* ${trilhaSonoraUrl}` : ''}
 `;
 
-    const encodedMessage = encodeURIComponent(message.trim());
-    const whatsappUrl = `https://wa.me/5591993584049?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
+        const encodedMessage = encodeURIComponent(message.trim());
+        const whatsappUrl = `https://wa.me/5591993584049?text=${encodedMessage}`;
+        
+        window.open(whatsappUrl, '_blank');
+    } catch (error) {
+        console.error("Erro ao processar o pedido:", error);
+        alert("Ocorreu um erro ao enviar seu pedido. Por favor, tente novamente.");
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const isTextProvided = estiloGravacao === 'Vinheta' ? (vinheta1 || vinheta2 || vinheta3) : textoCliente;
@@ -517,10 +551,13 @@ ${trilhaSonora ? `\n(O cliente enviou uma trilha sonora: ${trilhaSonora.name})` 
                   size="lg" 
                   onClick={handleSendWhatsApp} 
                   className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6 mt-4" 
-                  disabled={isUserLoading || !isOrderReady}
+                  disabled={isUserLoading || !isOrderReady || isSubmitting}
                 >
-                  <Send className="mr-3 h-5 w-5" />
-                  {isUserLoading ? 'Carregando...' : 'Enviar Informações via WhatsApp'}
+                  {isSubmitting ? (
+                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...</>
+                  ) : (
+                    <><Send className="mr-3 h-5 w-5" /> Enviar Informações via WhatsApp</>
+                  )}
                 </Button>
               </CardContent>
             </Card>
