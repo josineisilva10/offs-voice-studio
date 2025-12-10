@@ -270,7 +270,7 @@ export default function Home() {
         }
 
         const orderData = {
-            id: orderId, // Adicionando o ID ao documento
+            id: orderId,
             userId: user.uid,
             orderDate: new Date().toISOString(),
             locutor: locutorSelecionado?.nome,
@@ -285,7 +285,8 @@ export default function Home() {
             trilhaSonoraUrl: trilhaSonoraUrl,
             status: 'pending' as 'pending' | 'completed',
         };
-        addDocumentNonBlocking(collection(firestore, `users/${user.uid}/orders`), orderData);
+        
+        await addDocumentNonBlocking(newOrderRef, orderData);
 
         const message = `
 Olá! Gostaria de solicitar uma locução.
