@@ -19,6 +19,8 @@ interface Order {
   customerName?: string;
   customerEmail?: string;
   customerCpf?: string;
+  status?: 'pending' | 'completed';
+  chargeId?: string;
 }
 
 export default function CheckoutPage() {

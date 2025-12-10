@@ -233,104 +233,23 @@
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user data. Path-based ownership ensures only the user can access their document.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
-        }
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
       },
-      {
-        "path": "/users/{userId}/recordings/{recordingId}",
-        "definition": {
-          "entityName": "Recording",
-          "schema": {
-            "$ref": "#/backend/entities/Recording"
-          },
-          "description": "Stores user recordings. Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "recordingId",
-              "description": "The unique identifier for the recording."
-            }
-          ]
-        }
+      "description": "Stores user data. Path-based ownership ensures only the user can access their document."
+    },
+    "/orders/{orderId}": {
+      "schema": {
+        "$ref": "#/entities/Order"
       },
-      {
-        "path": "/users/{userId}/orders/{orderId}",
-        "definition": {
-          "entityName": "Order",
-          "schema": {
-            "$ref": "#/backend/entities/Order"
-          },
-          "description": "Stores orders placed by users. Includes denormalized 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "orderId",
-              "description": "The unique identifier for the order."
-            }
-          ]
-        }
+      "description": "Stores orders placed by users. Includes denormalized 'userId' for authorization independence."
+    },
+    "/packages/{packageId}": {
+      "schema": {
+        "$ref": "#/entities/Package"
       },
-      {
-        "path": "/users/{userId}/orders/{orderId}/paymentTransactions/{paymentTransactionId}",
-        "definition": {
-          "entityName": "PaymentTransaction",
-          "schema": {
-            "$ref": "#/backend/entities/PaymentTransaction"
-          },
-          "description": "Stores payment transactions for a user's order.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "orderId",
-              "description": "The unique identifier for the order."
-            },
-            {
-              "name": "paymentTransactionId",
-              "description": "The unique identifier for the payment transaction."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/packages/{packageId}",
-        "definition": {
-          "entityName": "Package",
-          "schema": {
-            "$ref": "#/backend/entities/Package"
-          },
-          "description": "Stores credit packages available for purchase.",
-          "params": [
-            {
-              "name": "packageId",
-              "description": "The unique identifier for the package."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to support the Neyzinho das Produções application, focusing on user-generated recordings, AI voice generation, order management, and credit packages. The primary goal is to ensure secure access and data integrity while adhering to the principles of Authorization Independence and Structural Segregation. Path-based ownership and explicit data modeling are used to enhance security and clarity.\n\n*   **Users:** User data is stored under `/users/{userId}` to ensure path-based ownership for private user data.\n*   **Recordings:** Each user's recordings are stored under `/users/{userId}/recordings/{recordingId}`. This structure provides clear ownership and simplifies security rules. The `userId` field within each recording document is redundant but crucial for Authorization Independence, as it avoids the need for `get()` calls to the parent user document to determine ownership.\n*   **Orders and Payment Transactions:** Orders are stored under `/users/{userId}/orders/{orderId}` and payment transactions are nested under orders at `/users/{userId}/orders/{orderId}/paymentTransactions/{paymentTransactionId}`. This maintains data locality and clear ownership. The `userId` field is duplicated in the order documents (denormalized) for Authorization Independence.\n*   **Packages:** Credit packages are stored in a global `/packages/{packageId}` collection. These packages are globally accessible and their data isn't user-specific, so a single collection is appropriate.\n\nThis structure supports required QAPs by:\n\n*   **Secure List Operations:** Path-based ownership enables secure `list` operations for recordings and orders. Security rules can easily filter based on `request.auth.uid` matching the `userId`.\n*   **Authorization Independence:** Denormalizing the `userId` into `recordings` and `orders` ensures that security rules can validate access without needing to fetch parent documents.\n*   **Explicit State Modeling:** The `Order` entity includes a `status` field to explicitly model the order's state, facilitating predictable query and rule logic."
+      "description": "Stores credit packages available for purchase."
+    }
   }
 }
