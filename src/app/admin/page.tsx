@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Loader2, Music } from 'lucide-react';
+import { Loader2, Music, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-// IMPORTANTE: Substitua este UID pelo seu próprio UID de administrador do Firebase.
-const ADMIN_USER_ID = 'ColoqueSeuUIDDeAdminAqui';
+// O e-mail do administrador que terá acesso a esta página.
+const ADMIN_EMAIL = 'josineisilva2@gmail.com';
 
 interface Order {
   id: string; // O ID do documento do Firestore
@@ -30,28 +31,28 @@ interface Order {
 }
 
 export default function AdminPage() {
-  const { firestore } = useFirebase();
+  const router = useRouter();
+  const { firestore, auth } = useFirebase();
   const { user, isUserLoading } = useUser();
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
+  const isAdmin = useMemo(() => user?.email === ADMIN_EMAIL, [user]);
+
   const allOrdersQuery = useMemo(() => {
-    if (!firestore || !user || user.uid !== ADMIN_USER_ID) return null;
-    // Usamos collectionGroup para buscar todos os documentos na coleção 'orders'
-    // em todos os subdiretórios de 'users'.
+    if (!firestore || !isAdmin) return null;
     return query(
       collectionGroup(firestore, 'orders'),
       orderBy('orderDate', 'desc')
     );
-  }, [firestore, user]);
+  }, [firestore, isAdmin]);
 
   const { data: orders, isLoading, error } = useCollection<Order>(allOrdersQuery);
 
   const handleUpdateStatus = async (order: Order, newStatus: 'pending' | 'completed') => {
-    if (!firestore || !user || user.uid !== ADMIN_USER_ID) return;
+    if (!firestore || !isAdmin) return;
 
     setUpdatingStatus(order.id);
     try {
-      // O ID do documento é o ID do pedido, mas precisamos do ID do usuário para construir o caminho.
       const orderRef = doc(firestore, `users/${order.userId}/orders/${order.id}`);
       await updateDoc(orderRef, { status: newStatus });
     } catch (e) {
@@ -62,15 +63,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  };
+
+  // Redireciona para o login se não estiver logado e o carregamento inicial já terminou
+  if (!isUserLoading && !user) {
+    router.push('/login');
+    return null; // Renderiza nada enquanto redireciona
+  }
+  
   if (isUserLoading || (user && !orders && isLoading)) {
     return <div className="text-center text-white p-10">Carregando painel de administração...</div>;
   }
 
-  if (!user || user.uid !== ADMIN_USER_ID) {
+  // Mostra acesso negado se o usuário não for o administrador
+  if (!isUserLoading && !isAdmin) {
     return (
       <div className="text-center text-red-500 p-10">
         <h1 className="text-3xl font-bold">Acesso Negado</h1>
-        <p className="mt-2">Esta página é restrita aos administradores.</p>
+        <p className="mt-2">Esta página é restrita ao administrador.</p>
         <Link href="/" className="text-purple-400 hover:underline mt-4 inline-block">
           Voltar para a página principal
         </Link>
@@ -96,9 +109,15 @@ export default function AdminPage() {
     <div className="text-white min-h-screen bg-gray-900">
        <div className="container mx-auto p-4 md:p-8">
          <header className="my-8 md:my-12">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
-                Painel do Administrador
-            </h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
+                    Painel do Administrador
+                </h1>
+                <Button onClick={handleLogout} variant="outline" size="sm">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                </Button>
+            </div>
             <p className="text-lg text-gray-400 mt-2 text-center">
                 Histórico completo de todos os pedidos recebidos.
             </p>
