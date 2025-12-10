@@ -63,7 +63,7 @@ const generatePaymentFlow = ai.defineFlow(
         },
         body: JSON.stringify({
             amount: input.amount,
-            description: input.description ?? 'Pedido de Locução - VozGenius',
+            description: input.description ?? 'Pedido de Locução - Neyzinho das Produções',
             customer: {
                 name: input.customer.name,
                 email: input.customer.email,

@@ -289,7 +289,7 @@ export default function Home() {
         
         <header className="text-center my-8 md:my-12">
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[#1E3A8A]">
-            VozGenius
+            Neyzinho das Produções
           </h1>
           <p className="text-lg text-gray-600 mt-2 font-light">
             Locuções profissionais com vozes de IA ou locutores reais.
@@ -548,7 +548,7 @@ export default function Home() {
         </main>
 
         <footer className="text-center mt-16 py-8 border-t border-border">
-          <p className="font-bold text-lg text-[#1E3A8A]">VozGenius</p>
+          <p className="font-bold text-lg text-[#1E3A8A]">Neyzinho das Produções</p>
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
           <div className="flex justify-center gap-4 mt-4">
              <Link href="/historico" className="text-blue-700 hover:text-orange-500">Meus Pedidos</Link>

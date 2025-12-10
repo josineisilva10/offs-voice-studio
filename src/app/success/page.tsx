@@ -22,7 +22,7 @@ export default function SuccessPage() {
         <CardContent>
           <p className="text-sm text-gray-500">
             Você receberá a gravação finalizada no seu email assim que estiver pronta. 
-            Obrigado por escolher a VozGenius!
+            Obrigado por escolher a Neyzinho das Produções!
           </p>
           <div className="mt-6">
             <Link href="/historico">
