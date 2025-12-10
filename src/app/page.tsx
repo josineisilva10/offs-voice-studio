@@ -62,6 +62,7 @@ const locutores = [
   { id: 43, nome: 'Bobby', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5841&v=1' },
   { id: 44, nome: 'Absamira Santos', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2052&v=1' },
   { id: 45, nome: 'Kavanhac', demoUrl: 'https://hd.paineldegravacao.com.br/demos/0713316001537166059.mp3' },
+  { id: 46, nome: 'Rafael Monson', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=456&v=1' },
 ];
 
 export default function Home() {
