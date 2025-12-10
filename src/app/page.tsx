@@ -238,7 +238,7 @@ ${instrucoesLocucao || 'Nenhuma'}
             Neyzinho das Produções
           </h1>
           <p className="text-lg text-gray-600 mt-2 font-light">
-            Locuções profissionais com vozes de IA ou locutores reais.
+            Locuções profissionais
           </p>
         </header>
 

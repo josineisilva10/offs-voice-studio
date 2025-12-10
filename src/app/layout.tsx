@@ -17,7 +17,7 @@ const ptSans = PT_Sans({
 
 export const metadata: Metadata = {
   title: "Neyzinho das Produções",
-  description: "Gere locuções profissionais com vozes de IA ou locutores reais.",
+  description: "Gere locuções profissionais.",
 };
 
 export default function RootLayout({
