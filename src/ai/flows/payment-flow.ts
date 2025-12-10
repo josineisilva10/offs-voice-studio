@@ -45,10 +45,12 @@ const generatePaymentFlow = ai.defineFlow(
     outputSchema: GeneratePaymentOutputSchema,
   },
   async (input) => {
+    // IMPORTANT: In a real application, the API Key should be stored securely, for example in Google Secret Manager.
+    // For this prototype, we are using an environment variable.
     const apiKey = process.env.ABACATE_PAY_API_KEY;
 
     if (!apiKey) {
-      throw new Error('ABACATE_PAY_API_KEY environment variable is not set.');
+      throw new Error('ABACATE_PAY_API_KEY environment variable is not set. Please add it to your .env file.');
     }
 
     const abacatePayApiUrl = 'https://api.abacatepay.com/v1/pixQrCode/create';
@@ -57,19 +59,19 @@ const generatePaymentFlow = ai.defineFlow(
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
+            'x-abacate-key': apiKey, // The API expects the key in this header
         },
         body: JSON.stringify({
             amount: input.amount,
-            description: input.description ?? 'Pedido de Locução',
+            description: input.description ?? 'Pedido de Locução - VozGenius',
             customer: {
                 name: input.customer.name,
                 email: input.customer.email,
-                taxId: input.customer.cpf, // Corrigido de 'cpf' para 'taxId'
+                taxId: input.customer.cpf,
                 cellphone: input.customer.cellphone,
             },
             metadata: {
-              externalId: input.orderId,
+              internal_order_id: input.orderId,
             }
         }),
     });
@@ -82,19 +84,19 @@ const generatePaymentFlow = ai.defineFlow(
 
     const responseData = await response.json();
     
-    // Correctly parse the response from the AbacatePay API based on user feedback
-    const chargeId = responseData.data?.id; 
-    const qrCodeUrl = responseData.data?.brCodeBase64;
-    const qrCodeText = responseData.data?.brCode;
+    // The Abacate Pay API returns the PIX data directly in the response
+    const chargeId = responseData.id; 
+    const qrCodeUrl = responseData.brCodeBase64; // This is the Base64 image of the QR Code
+    const qrCodeText = responseData.brCode; // This is the "copia e cola" text
 
     if (!chargeId || !qrCodeUrl || !qrCodeText) {
         console.error('Abacate Pay API response is missing required fields:', responseData);
-        throw new Error('Invalid response from payment provider. Expected data.id, data.brCodeBase64, and data.brCode.');
+        throw new Error('Invalid response from payment provider. Expected id, brCodeBase64, and brCode.');
     }
 
     return {
       chargeId,
-      qrCodeUrl,
+      qrCodeUrl: `data:image/png;base64,${qrCodeUrl}`, // Prepend data URI scheme
       qrCodeText,
     };
   }

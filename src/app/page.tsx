@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, ChangeEvent, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking }
 import { collection, doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 
 // Dados dos locutores
@@ -64,13 +65,12 @@ const locutores = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [textoCliente, setTextoCliente] = useState('');
   const [locutorSelecionado, setLocutorSelecionado] = useState<(typeof locutores[0]) | null>(null);
   
-  // Estado para controlar o áudio
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Estados para os novos campos
   const [estiloGravacao, setEstiloGravacao] = useState('');
   const [estiloLocucao, setEstiloLocucao] = useState('');
   const [estiloLocucaoOutro, setEstiloLocucaoOutro] = useState('');
@@ -79,22 +79,16 @@ export default function Home() {
   const [audioReferencia, setAudioReferencia] = useState<File | null>(null);
   const [trilhaSonora, setTrilhaSonora] = useState<File | null>(null);
 
-
-  // Estados para gravação de áudio
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudioURL, setRecordedAudioURL] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  // Estados para os campos de vinheta
   const [vinheta1, setVinheta1] = useState('');
   const [vinheta2, setVinheta2] = useState('');
   const [vinheta3, setVinheta3] = useState('');
 
-  // Estado para o valor total
   const [valorTotal, setValorTotal] = useState(0);
-
-  // Estado para o carregamento do envio
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { auth, firestore, firebaseApp } = useFirebase();
@@ -140,7 +134,7 @@ export default function Home() {
         valor = 7 + (tempoEstimado - 40) * 0.20;
       }
     }
-    setValorTotal(valor);
+    setValorTotal(parseFloat(valor.toFixed(2)));
   }, [tempoEstimado, tipoGravacao]);
   
   const handlePlay = (demoUrl: string) => {
@@ -158,7 +152,6 @@ export default function Home() {
         audioRef.current = null;
     }
   };
-
 
   const handleSelecionar = (locutor: typeof locutores[0]) => {
     setLocutorSelecionado(locutor);
@@ -229,7 +222,7 @@ export default function Home() {
   };
 
 
-  const handleSendWhatsApp = async () => {
+  const handleProceedToPayment = async () => {
     setIsSubmitting(true);
     try {
         if (!user || !firestore) {
@@ -250,23 +243,11 @@ export default function Home() {
         }
 
         const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
-        const valorFormatado = valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-        let textoParaGravacao = '';
+        
         let textoCompletoParaDB = '';
         if (estiloGravacao === 'Vinheta') {
-            textoParaGravacao = `
-*TEXTO PARA GRAVAÇÃO (VINHETAS):*
-*Vinheta 1:* "${vinheta1 || 'Não preenchida'}"
-*Vinheta 2:* "${vinheta2 || 'Não preenchida'}"
-*Vinheta 3:* "${vinheta3 || 'Não preenchida'}"
-`;
             textoCompletoParaDB = `Vinheta 1: ${vinheta1} | Vinheta 2: ${vinheta2} | Vinheta 3: ${vinheta3}`;
         } else {
-            textoParaGravacao = `
-*TEXTO PARA GRAVAÇÃO:*
-"${textoCliente.trim()}"
-`;
             textoCompletoParaDB = textoCliente.trim();
         }
 
@@ -289,30 +270,11 @@ export default function Home() {
         
         await addDocumentNonBlocking(newOrderRef, orderData);
 
-        const message = `
-Olá! Gostaria de solicitar uma locução.
+        router.push(`/checkout/${orderId}`);
 
-*RESUMO DO PEDIDO:*
------------------
-*Locutor(a):* ${locutorSelecionado?.nome}
-*Estilo de Gravação:* ${estiloGravacao}
-*Estilo de Locução:* ${estiloLocucaoFinal}
-*Tipo de Gravação:* ${tipoGravacao}
-*Tempo Estimado:* ${tempoEstimado} segundos
-*Valor Total:* ${valorFormatado}
------------------
-${textoParaGravacao}
-*INSTRUÇÕES ADICIONAIS:*
-"${instrucoesLocucao || 'Nenhuma'}"
-`;
-
-        const encodedMessage = encodeURIComponent(message.trim());
-        const whatsappUrl = `https://wa.me/5591993584049?text=${encodedMessage}`;
-        
-        window.open(whatsappUrl, '_blank');
     } catch (error) {
         console.error("Erro ao processar o pedido:", error);
-        alert("Ocorreu um erro ao enviar seu pedido. Por favor, tente novamente.");
+        alert("Ocorreu um erro ao criar seu pedido. Por favor, tente novamente.");
     } finally {
         setIsSubmitting(false);
     }
@@ -322,59 +284,59 @@ ${textoParaGravacao}
   const isOrderReady = valorTotal > 0 && locutorSelecionado && isTextProvided && estiloGravacao && estiloLocucao && tipoGravacao;
 
   return (
-    <div className="text-white min-h-screen">
+    <div className="bg-[#F5F5F5] text-gray-800 min-h-screen">
       <div className="container mx-auto p-4 md:p-8">
         
         <header className="text-center my-8 md:my-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            Neyzinho das Produções
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[#1E3A8A]">
+            VozGenius
           </h1>
-          <p className="text-lg text-gray-300 mt-2">
-            Locuções profissionais para comerciais, DJs, vinhetas e muito mais.
+          <p className="text-lg text-gray-600 mt-2 font-light">
+            Locuções profissionais com vozes de IA ou locutores reais.
           </p>
         </header>
 
-        <main className="space-y-12">
+        <main className="space-y-16">
         
           <section id="locutores-secao">
-            <h2 className="text-3xl font-bold text-center mb-8">1. Locutores Disponíveis</h2>
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">1. Escolha um Locutor</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {locutores.map((locutor) => (
-                <Card key={locutor.id} className={`bg-gray-800 border-gray-700 transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-purple-500 ring-2 ring-purple-500' : ''}`}>
+                <Card key={locutor.id} className={`bg-white border-gray-200 shadow-lg rounded-xl overflow-hidden transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-orange-500 ring-2 ring-orange-500' : 'hover:shadow-xl'}`}>
                   <CardHeader>
-                    <CardTitle className="text-xl text-white">{locutor.nome}</CardTitle>
+                    <CardTitle className="text-xl text-[#1E3A8A]">{locutor.nome}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-gray-400">Demonstração profissional</p>
                     <div className="flex flex-col sm:flex-row gap-2">
                        <div className="flex-1 flex gap-2">
-                         <Button onClick={() => handlePlay(locutor.demoUrl)} className="flex-1 bg-gray-700 hover:bg-gray-600">
+                         <Button onClick={() => handlePlay(locutor.demoUrl)} variant="outline" className="flex-1">
                            <PlayCircle className="mr-2 h-4 w-4" /> 
                            Play
                          </Button>
-                         <Button onClick={handleStop} className="flex-1 bg-red-700 hover:bg-red-600">
+                         <Button onClick={handleStop} variant="destructive" className="flex-1">
                            <StopCircle className="mr-2 h-4 w-4" /> 
                            Stop
                          </Button>
                        </div>
-                      <Button onClick={() => handleSelecionar(locutor)} className="flex-1 bg-purple-600 hover:bg-purple-700">
-                        Selecionar
-                      </Button>
                     </div>
                   </CardContent>
+                  <CardFooter>
+                     <Button onClick={() => handleSelecionar(locutor)} className="w-full bg-[#EA580C] hover:bg-orange-600 text-white font-bold">
+                        Selecionar {locutor.nome.split(' ')[0]}
+                      </Button>
+                  </CardFooter>
                 </Card>
               ))}
             </div>
           </section>
 
           <section id="detalhes-secao">
-            <h2 className="text-3xl font-bold text-center mb-8">2. Detalhes da Gravação</h2>
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">2. Detalhes da Gravação</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Estilo de Gravação */}
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader><CardTitle>Estilo de Gravação</CardTitle></CardHeader>
+              <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+                <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Estilo de Gravação</CardTitle></CardHeader>
                 <CardContent>
-                  <RadioGroup value={estiloGravacao} onValueChange={setEstiloGravacao}>
+                  <RadioGroup value={estiloGravacao} onValueChange={setEstiloGravacao} className="space-y-2">
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Gravação Comercial" id="rg-comercial" /><Label htmlFor="rg-comercial">Gravação Comercial</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Vinheta" id="rg-vinheta" /><Label htmlFor="rg-vinheta">Vinheta</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Chamada de Festa" id="rg-festa" /><Label htmlFor="rg-festa">Chamada de Festa</Label></div>
@@ -383,11 +345,10 @@ ${textoParaGravacao}
                 </CardContent>
               </Card>
 
-              {/* Estilo de Locução */}
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader><CardTitle>Estilo de Locução</CardTitle></CardHeader>
+              <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+                <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Estilo de Locução</CardTitle></CardHeader>
                 <CardContent>
-                  <RadioGroup value={estiloLocucao} onValueChange={setEstiloLocucao}>
+                  <RadioGroup value={estiloLocucao} onValueChange={setEstiloLocucao} className="space-y-2">
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Padrão" id="rl-padrao" /><Label htmlFor="rl-padrao">Padrão</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Impacto" id="rl-impacto" /><Label htmlFor="rl-impacto">Impacto</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Animado" id="rl-animado" /><Label htmlFor="rl-animado">Animado</Label></div>
@@ -395,32 +356,31 @@ ${textoParaGravacao}
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Outros" id="rl-outros" /><Label htmlFor="rl-outros">Outros</Label></div>
                   </RadioGroup>
                   {estiloLocucao === 'Outros' && (
-                    <Input type="text" placeholder="Descreva o estilo" value={estiloLocucaoOutro} onChange={(e) => setEstiloLocucaoOutro(e.target.value)} className="mt-2 bg-gray-700 border-gray-600"/>
+                    <Input type="text" placeholder="Descreva o estilo" value={estiloLocucaoOutro} onChange={(e) => setEstiloLocucaoOutro(e.target.value)} className="mt-4"/>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Tipo da Gravação */}
-              <Card className="bg-gray-800 border-gray-700">
-                <CardHeader><CardTitle>Tipo da Gravação</CardTitle></CardHeader>
+              <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+                <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Tipo da Gravação</CardTitle></CardHeader>
                 <CardContent>
-                  <RadioGroup value={tipoGravacao} onValueChange={setTipoGravacao}>
+                  <RadioGroup value={tipoGravacao} onValueChange={setTipoGravacao} className="space-y-2">
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Off (somente voz)" id="tipo-off" /><Label htmlFor="tipo-off">Off (somente voz)</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Produzida (voz + trilha + efeitos)" id="tipo-produzida" /><Label htmlFor="tipo-produzida">Produzida (com trilha e efeitos)</Label></div>
                   </RadioGroup>
                   {tipoGravacao === 'Produzida (voz + trilha + efeitos)' && (
-                    <div className="mt-4 pt-4 border-t border-gray-700">
-                      <Label htmlFor="trilha-upload" className="font-semibold text-white">Trilha Sonora (Opcional)</Label>
-                      <p className="text-gray-400 text-sm mb-2">Envie o arquivo de áudio da trilha.</p>
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <Label htmlFor="trilha-upload" className="font-semibold text-gray-700">Trilha Sonora (Opcional)</Label>
+                      <p className="text-gray-500 text-sm mb-2">Envie o arquivo de áudio da trilha.</p>
                       <Input 
                         id="trilha-upload" 
                         type="file" 
                         accept="audio/*" 
                         onChange={handleTrilhaFileChange} 
-                        className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"
+                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
                       />
                        {trilhaSonora && (
-                        <div className="mt-2 text-green-400 text-xs flex items-center">
+                        <div className="mt-2 text-green-600 text-xs flex items-center">
                           <FileAudio className="mr-2 h-3 w-3" />
                           <span>{trilhaSonora.name}</span>
                         </div>
@@ -433,99 +393,87 @@ ${textoParaGravacao}
           </section>
 
           <section id="texto-cliente-secao">
-            <h2 className="text-3xl font-bold text-center mb-8">3. Cole seu texto aqui</h2>
-            {estiloGravacao === 'Vinheta' ? (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor='vinheta1' className="text-lg font-semibold mb-2 block">Vinheta 1</Label>
-                  <Input
-                    id="vinheta1"
-                    className="w-full bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
-                    placeholder="Digite o texto para a vinheta 1"
-                    value={vinheta1}
-                    onChange={(e) => setVinheta1(e.target.value)}
-                  />
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">3. Insira seu Texto</h2>
+             <Card className="bg-white border-gray-200 shadow-lg rounded-xl p-6">
+                {estiloGravacao === 'Vinheta' ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor='vinheta1' className="text-lg font-semibold mb-2 block text-gray-700">Vinheta 1</Label>
+                      <Input id="vinheta1" placeholder="Digite o texto para a vinheta 1" value={vinheta1} onChange={(e) => setVinheta1(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label htmlFor='vinheta2' className="text-lg font-semibold mb-2 block text-gray-700">Vinheta 2</Label>
+                      <Input id="vinheta2" placeholder="Digite o texto para a vinheta 2" value={vinheta2} onChange={(e) => setVinheta2(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label htmlFor='vinheta3' className="text-lg font-semibold mb-2 block text-gray-700">Vinheta 3</Label>
+                      <Input id="vinheta3" placeholder="Digite o texto para a vinheta 3" value={vinheta3} onChange={(e) => setVinheta3(e.target.value)} />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor='texto-principal' className="text-lg font-semibold mb-2 block text-gray-700">Texto para Gravação</Label>
+                    <Textarea
+                      id="texto-principal"
+                      className="w-full min-h-[200px]"
+                      placeholder="Digite ou cole aqui o roteiro da sua locução..."
+                      value={textoCliente}
+                      onChange={(e) => setTextoCliente(e.target.value)}
+                    />
+                  </div>
+                )}
+                <div className="text-center mt-4 text-lg text-gray-700">
+                  <span className="font-semibold">Tempo estimado:</span> {tempoEstimado} segundos
                 </div>
-                <div>
-                  <Label htmlFor='vinheta2' className="text-lg font-semibold mb-2 block">Vinheta 2</Label>
-                  <Input
-                    id="vinheta2"
-                    className="w-full bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
-                    placeholder="Digite o texto para a vinheta 2"
-                    value={vinheta2}
-                    onChange={(e) => setVinheta2(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor='vinheta3' className="text-lg font-semibold mb-2 block">Vinheta 3</Label>
-                  <Input
-                    id="vinheta3"
-                    className="w-full bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
-                    placeholder="Digite o texto para a vinheta 3"
-                    value={vinheta3}
-                    onChange={(e) => setVinheta3(e.target.value)}
-                  />
-                </div>
-              </div>
-            ) : (
-              <Textarea
-                className="w-full min-h-[200px] bg-gray-800 border-gray-700 text-white text-base p-4 rounded-lg focus:ring-purple-500"
-                placeholder="Digite ou cole aqui o roteiro da sua locução..."
-                value={textoCliente}
-                onChange={(e) => setTextoCliente(e.target.value)}
-              />
-            )}
-            <div className="text-center mt-4 text-lg">
-              <span className="font-semibold">Tempo estimado:</span> {tempoEstimado} segundos
-            </div>
+            </Card>
           </section>
           
           <section>
-             <h2 className="text-3xl font-bold text-center mb-8">4. Instruções Adicionais</h2>
+             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">4. Instruções e Referências</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader><CardTitle>Como você quer sua locução?</CardTitle></CardHeader>
+                <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+                  <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Instruções de Locução</CardTitle></CardHeader>
                   <CardContent>
                     <Textarea 
                       placeholder="Descreva o ritmo, velocidade, energia, referências e outros detalhes importantes."
-                      className="w-full min-h-[150px] bg-gray-700 border-gray-600"
+                      className="w-full min-h-[150px]"
                       value={instrucoesLocucao}
                       onChange={(e) => setInstrucoesLocucao(e.target.value)}
                     />
                   </CardContent>
                 </Card>
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader><CardTitle>Envie um áudio de referência</CardTitle></CardHeader>
+                <Card className="bg-white border-gray-200 shadow-lg rounded-xl">
+                  <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Áudio de Referência (Opcional)</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-gray-400 text-sm">Grave ou envie um áudio com o estilo desejado ou com o modelo de referência.</p>
+                    <p className="text-gray-500 text-sm">Grave ou envie um áudio com o estilo desejado.</p>
 
                     <div className="flex flex-wrap gap-2">
                        {!isRecording && (
-                        <Button onClick={startRecording} className="bg-red-600 hover:bg-red-700">
+                        <Button onClick={startRecording} variant="destructive">
                           <Mic className="mr-2 h-4 w-4" /> Gravar Áudio
                         </Button>
                       )}
                       {isRecording && (
-                        <Button onClick={stopRecording} className="bg-gray-600 hover:bg-gray-700">
+                        <Button onClick={stopRecording} variant="secondary">
                           <Square className="mr-2 h-4 w-4" /> Parar Gravação
                         </Button>
                       )}
-                      <Label htmlFor="audio-upload" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-purple-600 text-white hover:bg-purple-700 h-10 px-4 py-2 cursor-pointer">
+                      <Label htmlFor="audio-upload" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-[#1E3A8A] text-white hover:bg-blue-800 h-10 px-4 py-2 cursor-pointer">
                         <FileAudio className="mr-2 h-4 w-4"/> Enviar Arquivo
                       </Label>
                       <Input id="audio-upload" type="file" accept="audio/*" onChange={handleFileChange} className="hidden"/>
                     </div>
                     
                     {recordedAudioURL && (
-                      <div className="mt-4 p-3 bg-gray-700 rounded-lg">
-                        <p className="text-green-400 flex items-center mb-2">
+                      <div className="mt-4 p-3 bg-gray-100 rounded-lg">
+                        <p className="text-green-600 flex items-center mb-2 font-semibold">
                           <FileAudio className="mr-2 h-4 w-4" />
-                          <span>{audioReferencia?.name} pronto para envio.</span>
+                          <span>{audioReferencia?.name} pronto.</span>
                         </p>
                         <div className="flex items-center gap-2">
                           <audio src={recordedAudioURL} controls className="w-full h-10" />
-                          <Button onClick={deleteAudio} variant="destructive" size="icon">
-                             <Trash2 className="h-4 w-4" />
+                          <Button onClick={deleteAudio} variant="ghost" size="icon">
+                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
                       </div>
@@ -536,56 +484,60 @@ ${textoParaGravacao}
           </section>
 
           <section id="pagamento-secao">
-            <h2 className="text-3xl font-bold text-center mb-8">5. Finalizar</h2>
-            <Card className="bg-gray-800 border-gray-700 text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">5. Orçamento e Pagamento</h2>
+            <Card className="bg-white border-gray-200 shadow-xl rounded-xl text-center max-w-2xl mx-auto">
               <CardHeader>
-                <CardTitle className="text-2xl text-white">Orçamento Final</CardTitle>
+                <CardTitle className="text-2xl text-[#1E3A8A]">Orçamento Final</CardTitle>
               </CardHeader>
-              <CardContent className="text-gray-300 space-y-6">
-                <p className="text-4xl font-bold text-green-400">
+              <CardContent className="text-gray-700 space-y-2">
+                <p className="text-5xl font-bold text-green-600">
                   {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
-                <p className="text-sm text-gray-400 -mt-4">
-                  {tipoGravacao ? tipoGravacao : 'Selecione o tipo de gravação'}
+                <p className="text-sm text-gray-500">
+                  {tipoGravacao ? tipoGravacao : 'Selecione o tipo de gravação para ver o preço'}
                 </p>
-
+              </CardContent>
+              <CardFooter className="flex-col gap-4 p-6">
                 <Button 
                   size="lg" 
-                  onClick={handleSendWhatsApp} 
-                  className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6 mt-4" 
+                  onClick={handleProceedToPayment} 
+                  className="w-full bg-[#EA580C] hover:bg-orange-600 text-white text-lg px-8 py-6" 
                   disabled={isUserLoading || !isOrderReady || isSubmitting}
                 >
                   {isSubmitting ? (
                     <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...</>
                   ) : (
-                    <><Send className="mr-3 h-5 w-5" /> Enviar Informações via WhatsApp</>
+                    <><Send className="mr-3 h-5 w-5" /> Ir para o Pagamento</>
                   )}
                 </Button>
-              </CardContent>
+                 <p className="text-xs text-gray-400">Você será redirecionado para a página de pagamento seguro.</p>
+              </CardFooter>
             </Card>
           </section>
 
           <section id="tabela-precos-secao" className="mt-12">
-            <h2 className="text-3xl font-bold text-center mb-8">Tabela de Preços</h2>
-            <div className="max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-gray-800 border-gray-700 text-center">
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">Tabela de Preços</h2>
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Card className="bg-white border-gray-200 shadow-lg rounded-xl text-center">
                 <CardHeader>
-                  <CardTitle className="text-xl text-white">Locução OFF</CardTitle>
-                  <p className="text-sm text-gray-400">(somente a voz)</p>
+                  <CardTitle className="text-xl text-[#1E3A8A]">Locução OFF</CardTitle>
+                  <p className="text-sm text-gray-500">(somente a voz)</p>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-400">R$ 7,00</p>
+                  <p className="text-3xl font-bold text-green-600">R$ 7,00</p>
                   <p className="text-sm text-gray-500">para textos de até 40 segundos.</p>
+                  <p className="text-xs text-gray-400 mt-1">+ R$0,20 por segundo adicional</p>
                 </CardContent>
               </Card>
-              <Card className="bg-gray-800 border-gray-700 text-center">
+              <Card className="bg-white border-gray-200 shadow-lg rounded-xl text-center">
                 <CardHeader>
-                  <CardTitle className="text-xl text-white">Locução Produzida</CardTitle>
-                  <p className="text-sm text-gray-400">(voz + trilha + efeitos)</p>
+                  <CardTitle className="text-xl text-[#1E3A8A]">Locução Produzida</CardTitle>
+                  <p className="text-sm text-gray-500">(voz + trilha + efeitos)</p>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-400">R$ 15,00</p>
+                  <p className="text-3xl font-bold text-green-600">R$ 15,00</p>
                   <p className="text-sm text-gray-500">para textos de até 40 segundos.</p>
+                   <p className="text-xs text-gray-400 mt-1">+ R$0,35 por segundo adicional</p>
                 </CardContent>
               </Card>
             </div>
@@ -593,10 +545,13 @@ ${textoParaGravacao}
 
         </main>
 
-        <footer className="text-center mt-12 py-6 border-t border-gray-800">
-          <p className="font-bold text-lg">Neyzinho das Produções</p>
+        <footer className="text-center mt-16 py-8 border-t border-gray-200">
+          <p className="font-bold text-lg text-[#1E3A8A]">VozGenius</p>
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
-          <Link href="/historico" className="text-purple-400 hover:text-purple-300 mt-2 inline-block">Histórico de Pedidos</Link>
+          <div className="flex justify-center gap-4 mt-4">
+             <Link href="/historico" className="text-blue-700 hover:text-orange-500">Meus Pedidos</Link>
+             <Link href="/admin" className="text-blue-700 hover:text-orange-500">Admin</Link>
+          </div>
         </footer>
       </div>
     </div>
