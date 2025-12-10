@@ -341,8 +341,6 @@ export default function Home() {
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Vinheta" id="rg-vinheta" /><Label htmlFor="rg-vinheta">Vinheta</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Chamada de Festa" id="rg-festa" /><Label htmlFor="rg-festa">Chamada de Festa</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Spot" id="rg-spot" /><Label htmlFor="rg-spot">Spot</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Institucional" id="rg-institucional" /><Label htmlFor="rg-institucional">Institucional</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="URA/Atendimento" id="rg-ura" /><Label htmlFor="rg-ura">URA / Atendimento</Label></div>
                   </RadioGroup>
                 </CardContent>
               </Card>
@@ -357,7 +355,6 @@ export default function Home() {
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Varejo" id="rl-varejo" /><Label htmlFor="rl-varejo">Varejo</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Jovem" id="rl-jovem" /><Label htmlFor="rl-jovem">Jovem</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Caricata" id="rl-caricata" /><Label htmlFor="rl-caricata">Caricata</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Institucional/Sóbria" id="rl-institucional" /><Label htmlFor="rl-institucional">Institucional/Sóbria</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Outros" id="rl-outros" /><Label htmlFor="rl-outros">Outros</Label></div>
                   </RadioGroup>
                   {estiloLocucao === 'Outros' && (
