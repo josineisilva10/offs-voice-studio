@@ -222,7 +222,7 @@ export default function Home() {
   };
 
 
-  const handleProceedToPayment = async () => {
+  const handleSendWhatsApp = async () => {
     setIsSubmitting(true);
     try {
         if (!user || !firestore) {
@@ -270,7 +270,29 @@ export default function Home() {
         
         await addDocumentNonBlocking(newOrderRef, orderData);
 
-        router.push(`/checkout/${orderId}`);
+        // Montar a mensagem para o WhatsApp
+        const whatsAppMessage = `
+*Pedido de Locução*
+
+*Locutor:* ${locutorSelecionado?.nome}
+*Estilo de Gravação:* ${estiloGravacao}
+*Estilo de Locução:* ${estiloLocucaoFinal}
+*Tipo de Gravação:* ${tipoGravacao}
+
+*Texto para Gravação:*
+${textoCompletoParaDB}
+
+*Tempo Estimado:* ${tempoEstimado} segundos
+*Valor Total:* ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+
+*Instruções:*
+${instrucoesLocucao || 'Nenhuma'}
+        `;
+
+        const encodedMessage = encodeURIComponent(whatsAppMessage.trim());
+        const whatsAppUrl = `https://wa.me/5591993584049?text=${encodedMessage}`;
+
+        window.open(whatsAppUrl, '_blank');
 
     } catch (error) {
         console.error("Erro ao processar o pedido:", error);
@@ -502,17 +524,17 @@ export default function Home() {
               <CardFooter className="flex-col gap-4 p-6">
                 <Button 
                   size="lg" 
-                  onClick={handleProceedToPayment} 
+                  onClick={handleSendWhatsApp} 
                   className="w-full bg-[#EA580C] hover:bg-orange-600 text-white text-lg px-8 py-6" 
                   disabled={isUserLoading || !isOrderReady || isSubmitting}
                 >
                   {isSubmitting ? (
                     <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...</>
                   ) : (
-                    <><Send className="mr-3 h-5 w-5" /> Ir para o Pagamento</>
+                    <><Send className="mr-3 h-5 w-5" /> Enviar Pedido via WhatsApp</>
                   )}
                 </Button>
-                 <p className="text-xs text-gray-400">Você será redirecionado para a página de pagamento seguro.</p>
+                 <p className="text-xs text-gray-400">Você será redirecionado para o WhatsApp para enviar o pedido.</p>
               </CardFooter>
             </Card>
           </section>
