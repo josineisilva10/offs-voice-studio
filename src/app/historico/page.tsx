@@ -21,7 +21,7 @@ interface Order {
   instrucoes: string;
   audioReferenciaUrl?: string;
   trilhaSonoraUrl?: string;
-  status: string;
+  status: 'pending' | 'completed';
 }
 
 const OrderCard = ({ order }: { order: Order }) => {
@@ -41,7 +41,9 @@ const OrderCard = ({ order }: { order: Order }) => {
             <CardTitle className="text-xl">Pedido de {order.locutor}</CardTitle>
             <CardDescription className="text-gray-400">{formattedDate}</CardDescription>
           </div>
-          <Badge variant={order.status === 'pending' ? 'secondary' : 'default'}>{order.status}</Badge>
+          <Badge variant={order.status === 'pending' ? 'destructive' : 'default'}>
+            {order.status === 'pending' ? 'Pendente' : 'Feito'}
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

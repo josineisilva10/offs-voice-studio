@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { PlayCircle, Send, FileAudio, Mic, Square, Trash2, StopCircle, Loader2 } from 'lucide-react';
 import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 
@@ -235,7 +235,9 @@ export default function Home() {
             throw new Error('Usuário ou Firestore não disponível.');
         }
 
-        const orderId = `${user.uid}-${Date.now()}`;
+        const newOrderRef = doc(collection(firestore, `users/${user.uid}/orders`));
+        const orderId = newOrderRef.id;
+
         let audioReferenciaUrl = '';
         let trilhaSonoraUrl = '';
 
@@ -268,6 +270,7 @@ export default function Home() {
         }
 
         const orderData = {
+            id: orderId, // Adicionando o ID ao documento
             userId: user.uid,
             orderDate: new Date().toISOString(),
             locutor: locutorSelecionado?.nome,
@@ -280,7 +283,7 @@ export default function Home() {
             instrucoes: instrucoesLocucao,
             audioReferenciaUrl: audioReferenciaUrl,
             trilhaSonoraUrl: trilhaSonoraUrl,
-            status: 'pending',
+            status: 'pending' as 'pending' | 'completed',
         };
         addDocumentNonBlocking(collection(firestore, `users/${user.uid}/orders`), orderData);
 
