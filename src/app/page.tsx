@@ -11,6 +11,7 @@ import { PlayCircle, Send, StopCircle, Loader2 } from 'lucide-react';
 import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 // Dados dos locutores
 const locutores = [
@@ -63,6 +64,7 @@ const locutores = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [textoCliente, setTextoCliente] = useState('');
   const [locutorSelecionado, setLocutorSelecionado] = useState<(typeof locutores[0]) | null>(null);
   
@@ -149,14 +151,14 @@ export default function Home() {
     document.getElementById('detalhes-secao')?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const handleSendWhatsApp = async () => {
+  const handleSendOrder = async () => {
     setIsSubmitting(true);
     try {
         if (!user || !firestore) {
             throw new Error('Usuário ou Firestore não disponível.');
         }
 
-        const newOrderRef = doc(collection(firestore, `orders`));
+        const newOrderRef = doc(collection(firestore, "orders"));
         const orderId = newOrderRef.id;
 
         const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
@@ -171,7 +173,6 @@ export default function Home() {
         const orderData = {
             id: orderId,
             userId: user.uid,
-            customerName: user.displayName ?? "Cliente Anônimo",
             orderDate: new Date().toISOString(),
             locutor: locutorSelecionado?.nome,
             estiloGravacao,
@@ -187,38 +188,12 @@ export default function Home() {
         
         await addDocumentNonBlocking(newOrderRef, orderData);
 
-        // Montar a mensagem para o WhatsApp
-        let whatsAppMessage = `
-*Pedido de Locução*
+        router.push(`/checkout/${orderId}`);
 
-*Locutor:* ${locutorSelecionado?.nome}
-*Estilo de Gravação:* ${estiloGravacao}
-*Estilo de Locução:* ${estiloLocucaoFinal}
-*Tipo de Gravação:* ${tipoGravacao}
-`;
-        if (tipoGravacao === 'Produzida (voz + trilha + efeitos)' && musicaYoutube) {
-            whatsAppMessage += `*Música para produção:* ${musicaYoutube}\n`;
-        }
-
-        whatsAppMessage += `
-*Texto para Gravação:*
-${textoCompletoParaDB}
-
-*Tempo Estimado:* ${tempoEstimado} segundos
-*Valor Total:* ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-
-*Instruções:*
-${instrucoesLocucao || 'Nenhuma'}
-        `;
-
-        const encodedMessage = encodeURIComponent(whatsAppMessage.trim());
-        const whatsAppUrl = `https://wa.me/5591993584049?text=${encodedMessage}`;
-
-        window.open(whatsAppUrl, '_blank');
 
     } catch (error) {
         console.error("Erro ao processar o pedido:", error);
-        alert("Ocorreu um erro ao criar seu pedido. Por favor, tente novamente.");
+        router.push('/error?message=' + encodeURIComponent('Não foi possível criar seu pedido. Tente novamente.'));
     } finally {
         setIsSubmitting(false);
     }
@@ -406,17 +381,17 @@ ${instrucoesLocucao || 'Nenhuma'}
               <CardFooter className="flex-col gap-4 p-6">
                 <Button 
                   size="lg" 
-                  onClick={handleSendWhatsApp} 
+                  onClick={handleSendOrder} 
                   className="w-full bg-[#EA580C] hover:bg-orange-600 text-white text-lg px-8 py-6" 
                   disabled={isUserLoading || !isOrderReady || isSubmitting}
                 >
                   {isSubmitting ? (
                     <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...</>
                   ) : (
-                    <><Send className="mr-3 h-5 w-5" /> Enviar Pedido via WhatsApp</>
+                    <><Send className="mr-3 h-5 w-5" /> Fazer Pedido e Pagar</>
                   )}
                 </Button>
-                 <p className="text-xs text-gray-400">Você será redirecionado para o WhatsApp para enviar o pedido.</p>
+                 <p className="text-xs text-gray-400">Você será redirecionado para a página de pagamento.</p>
               </CardFooter>
             </Card>
           </section>
