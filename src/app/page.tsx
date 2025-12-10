@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { PlayCircle, Send, StopCircle, Loader2 } from 'lucide-react';
-import { useFirebase, useUser, initiateAnonymousSignIn, addDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useFirebase, useUser, initiateAnonymousSignIn } from '@/firebase';
+import { collection, doc, setDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -186,7 +186,7 @@ export default function Home() {
             status: 'pending' as 'pending' | 'completed',
         };
         
-        await addDocumentNonBlocking(newOrderRef, orderData);
+        await setDoc(newOrderRef, orderData);
 
         router.push(`/checkout/${orderId}`);
 
