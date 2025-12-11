@@ -28,7 +28,7 @@ const locutores = [
   { id: 11, nome: 'Patricia Trezzi', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5061&v=1' },
   { id: 12, nome: 'Patricia Vieira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1714&v=1' },
   { id: 13, nome: 'Donato De Paula', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5257&v=1' },
-  { id: 14, nome: 'Jonas Moreira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2420&v=1' },
+  { id: 14, nome: 'Jonas Moreira', demoUrl: 'https://vozlocutor.combr/download-audio.php?id=2420&v=1' },
   { id: 15, nome: 'Elissandra Lima', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=570&v=1' },
   { id: 16, nome: 'Lula Muniz', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=222&v=1' },
   { id: 17, nome: 'Antonio Manoel', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=176&v=1' },
