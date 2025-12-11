@@ -9,7 +9,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { PlayCircle, Send, StopCircle, Loader2 } from 'lucide-react';
 import { useFirebase, useUser, initiateAnonymousSignIn } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -28,7 +27,7 @@ const locutores = [
   { id: 11, nome: 'Patricia Trezzi', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5061&v=1' },
   { id: 12, nome: 'Patricia Vieira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1714&v=1' },
   { id: 13, nome: 'Donato De Paula', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5257&v=1' },
-  { id: 14, nome: 'Jonas Moreira', demoUrl: 'https://vozlocutor.combr/download-audio.php?id=2420&v=1' },
+  { id: 14, nome: 'Jonas Moreira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2420&v=1' },
   { id: 15, nome: 'Elissandra Lima', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=570&v=1' },
   { id: 16, nome: 'Lula Muniz', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=222&v=1' },
   { id: 17, nome: 'Antonio Manoel', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=176&v=1' },
@@ -68,7 +67,7 @@ export default function Home() {
   const [textoCliente, setTextoCliente] = useState('');
   const [locutorSelecionado, setLocutorSelecionado] = useState<any>(null);
 
-  const audioRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [estiloGravacao, setEstiloGravacao] = useState('');
   const [estiloLocucao, setEstiloLocucao] = useState('');
@@ -84,7 +83,7 @@ export default function Home() {
   const [valorTotal, setValorTotal] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { auth, firestore } = useFirebase();
+  const { auth } = useFirebase();
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
@@ -140,70 +139,48 @@ export default function Home() {
     document.getElementById('detalhes-secao')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendOrder = async () => {
+  const handleSendOrder = () => {
     setIsSubmitting(true);
     try {
-      if (!user || !firestore) throw new Error('Usuário ou Firestore não disponível.');
+        const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
 
-      const newOrderRef = doc(collection(firestore, 'orders'));
-      const orderId = newOrderRef.id;
+        const textoParaMensagem = estiloGravacao === 'Vinheta'
+            ? `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}`
+            : textoCliente.trim();
+        
+        const mensagem = `
+*Novo Pedido de Locução*
 
-      const estiloLocucaoFinal =
-        estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
-
-      const textoCompletoParaDB =
-        estiloGravacao === 'Vinheta'
-          ? `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}`
-          : textoCliente.trim();
-
-      const orderData = {
-        id: orderId,
-        userId: user.uid,
-        orderDate: new Date().toISOString(),
-        locutor: locutorSelecionado?.nome,
-        estiloGravacao,
-        estiloLocucao: estiloLocucaoFinal,
-        tipoGravacao,
-        texto: textoCompletoParaDB,
-        tempoEstimado,
-        totalAmount: valorTotal,
-        instrucoes: instrucoesLocucao,
-        musicaYoutube,
-        status: 'pending',
-      };
-
-      await setDoc(newOrderRef, orderData);
-
-      const message = `
-Olá, Neyzinho! Gostaria de fazer um novo pedido de locução.
-*Pedido ID:* ${orderId}
-
-*Detalhes do Pedido:*
-- *Locutor:* ${orderData.locutor}
-- *Estilo de Gravação:* ${orderData.estiloGravacao}
-- *Estilo de Locução:* ${orderData.estiloLocucao}
-- *Tipo de Gravação:* ${orderData.tipoGravacao}
-- *Duração Estimada:* ${orderData.tempoEstimado}s
-- *Valor Total:* R$ ${orderData.totalAmount.toFixed(2)}
+*Locutor:* ${locutorSelecionado?.nome || 'Não selecionado'}
+*Estilo de Gravação:* ${estiloGravacao || 'Não definido'}
+*Estilo de Locução:* ${estiloLocucaoFinal || 'Não definido'}
+*Tipo da Gravação:* ${tipoGravacao || 'Não definido'}
 
 *Texto para Gravação:*
-${orderData.texto}
+${textoParaMensagem}
+
+*Tempo Estimado:* ${tempoEstimado} segundos
+*Valor Total:* ${valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
 
 *Instruções Adicionais:*
-${orderData.instrucoes || 'Nenhuma'}
+${instrucoesLocucao || 'Nenhuma'}
 
 *Música de Referência (YouTube):*
-${orderData.musicaYoutube || 'Nenhuma'}
-      `.trim();
+${musicaYoutube || 'Nenhuma'}
+        `;
 
-      const whatsappUrl = `https://wa.me/5591993584049?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-      
+        const numeroWhatsapp = '5591993584049';
+        const urlWhatsapp = `https://wa.me/${numeroWhatsapp}?text=${encodeURIComponent(mensagem.trim())}`;
+        
+        // Redireciona o usuário para o WhatsApp
+        window.location.href = urlWhatsapp;
+
     } catch (error) {
-      console.error('Erro ao processar o pedido:', error);
-      alert('Não foi possível criar seu pedido.');
+        console.error("Erro ao gerar link do WhatsApp:", error);
+        alert('Não foi possível gerar o link para o WhatsApp. Tente novamente.');
     } finally {
-      setIsSubmitting(false);
+        // O usuário será redirecionado, mas caso algo falhe, resetamos o estado
+        setIsSubmitting(false);
     }
   };
 
@@ -212,7 +189,7 @@ ${orderData.musicaYoutube || 'Nenhuma'}
     locutorSelecionado &&
     textoCompleto.trim() !== '' &&
     estiloGravacao &&
-    estiloLocucao &&
+    (estiloLocucao && (estiloLocucao !== 'Outros' || estiloLocucaoOutro.trim() !== '')) &&
     tipoGravacao;
 
   return (
@@ -458,20 +435,20 @@ ${orderData.musicaYoutube || 'Nenhuma'}
                   size="lg"
                   onClick={handleSendOrder}
                   className="w-full bg-[#EA580C] hover:bg-orange-600 text-white text-lg px-8 py-6"
-                  disabled={isUserLoading || !isOrderReady || isSubmitting}
+                  disabled={!isOrderReady || isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Gerando link...
                     </>
                   ) : (
                     <>
-                      <Send className="mr-3 h-5 w-5" /> Fazer Pedido e Pagar
+                      <Send className="mr-3 h-5 w-5" /> Enviar Pedido via WhatsApp
                     </>
                   )}
                 </Button>
 
-                <p className="text-xs text-gray-400">Você será redirecionado para o pagamento.</p>
+                <p className="text-xs text-gray-400">Você será redirecionado para o WhatsApp.</p>
 
               </CardFooter>
 
@@ -508,7 +485,7 @@ ${orderData.musicaYoutube || 'Nenhuma'}
                   <p className="text-sm text-gray-500">até 40 segundos</p>
                   <p className="text-xs text-gray-400 mt-1">+ R$0,35 por segundo adicional</p>
                 </CardContent>
-              </card>
+              </Card>
 
             </div>
           </section>
