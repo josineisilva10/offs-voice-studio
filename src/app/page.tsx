@@ -203,6 +203,16 @@ ${musicaYoutube || 'Nenhuma'}
           </p>
         </header>
 
+        <section id="video-tutorial" className="mb-16">
+          <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">Veja como é fácil fazer seu pedido</h2>
+          <div className="aspect-video bg-gray-300/80 rounded-xl shadow-lg flex items-center justify-center max-w-4xl mx-auto">
+            <div className="text-center text-gray-600">
+                <PlayCircle size={80} className="mx-auto opacity-50" />
+                <p className="mt-2 font-semibold">Vídeo Tutorial Em Breve</p>
+            </div>
+          </div>
+        </section>
+
         <main className="space-y-16">
 
           {/* LOCUTORES */}
