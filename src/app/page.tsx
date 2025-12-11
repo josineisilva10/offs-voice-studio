@@ -66,9 +66,9 @@ const locutores = [
 export default function Home() {
   const router = useRouter();
   const [textoCliente, setTextoCliente] = useState('');
-  const [locutorSelecionado, setLocutorSelecionado] = useState<(typeof locutores[0]) | null>(null);
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [locutorSelecionado, setLocutorSelecionado] = useState<any>(null);
+
+  const audioRef = useRef<any>(null);
 
   const [estiloGravacao, setEstiloGravacao] = useState('');
   const [estiloLocucao, setEstiloLocucao] = useState('');
@@ -103,8 +103,7 @@ export default function Home() {
   const tempoEstimado = useMemo(() => {
     if (!textoCompleto.trim()) return 0;
     const palavras = textoCompleto.trim().split(/\s+/).length;
-    const segundos = Math.ceil(palavras / 2.5);
-    return segundos;
+    return Math.ceil(palavras / 2.5);
   }, [textoCompleto]);
 
   useEffect(() => {
@@ -115,61 +114,48 @@ export default function Home() {
 
     let valor = 0;
     if (tipoGravacao === 'Produzida (voz + trilha + efeitos)') {
-      if (tempoEstimado <= 40) {
-        valor = 15;
-      } else {
-        valor = 15 + (tempoEstimado - 40) * 0.35;
-      }
+      valor = tempoEstimado <= 40 ? 15 : 15 + (tempoEstimado - 40) * 0.35;
     } else if (tipoGravacao === 'Off (somente voz)') {
-      if (tempoEstimado <= 40) {
-        valor = 7;
-      } else {
-        valor = 7 + (tempoEstimado - 40) * 0.20;
-      }
+      valor = tempoEstimado <= 40 ? 7 : 7 + (tempoEstimado - 40) * 0.20;
     }
     setValorTotal(parseFloat(valor.toFixed(2)));
   }, [tempoEstimado, tipoGravacao]);
-  
+
   const handlePlay = (demoUrl: string) => {
-    if (audioRef.current) {
-        audioRef.current.pause();
-    }
+    if (audioRef.current) audioRef.current.pause();
     const newAudio = new Audio(demoUrl);
     audioRef.current = newAudio;
-    newAudio.play().catch(error => console.error("Erro ao tocar o áudio:", error));
+    newAudio.play();
   };
 
   const handleStop = () => {
     if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      audioRef.current.pause();
+      audioRef.current = null;
     }
   };
 
-  const handleSelecionar = (locutor: typeof locutores[0]) => {
+  const handleSelecionar = (locutor: any) => {
     setLocutorSelecionado(locutor);
     document.getElementById('detalhes-secao')?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   const handleSendOrder = async () => {
     setIsSubmitting(true);
     try {
-      if (!user || !firestore) {
-        throw new Error('Usuário ou Firestore não disponível.');
-      }
-  
-      const newOrderRef = doc(collection(firestore, "orders"));
+      if (!user || !firestore) throw new Error('Usuário ou Firestore não disponível.');
+
+      const newOrderRef = doc(collection(firestore, 'orders'));
       const orderId = newOrderRef.id;
-  
-      const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
-      
-      let textoCompletoParaDB = '';
-      if (estiloGravacao === 'Vinheta') {
-        textoCompletoParaDB = `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}`;
-      } else {
-        textoCompletoParaDB = textoCliente.trim();
-      }
-  
+
+      const estiloLocucaoFinal =
+        estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
+
+      const textoCompletoParaDB =
+        estiloGravacao === 'Vinheta'
+          ? `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}`
+          : textoCliente.trim();
+
       const orderData = {
         id: orderId,
         userId: user.uid,
@@ -182,28 +168,57 @@ export default function Home() {
         tempoEstimado,
         totalAmount: valorTotal,
         instrucoes: instrucoesLocucao,
-        musicaYoutube: musicaYoutube,
-        status: 'pending' as 'pending' | 'completed',
+        musicaYoutube,
+        status: 'pending',
       };
-      
+
       await setDoc(newOrderRef, orderData);
-  
-      router.push(`/checkout/${orderId}`);
-  
+
+      const message = `
+Olá, Neyzinho! Gostaria de fazer um novo pedido de locução.
+*Pedido ID:* ${orderId}
+
+*Detalhes do Pedido:*
+- *Locutor:* ${orderData.locutor}
+- *Estilo de Gravação:* ${orderData.estiloGravacao}
+- *Estilo de Locução:* ${orderData.estiloLocucao}
+- *Tipo de Gravação:* ${orderData.tipoGravacao}
+- *Duração Estimada:* ${orderData.tempoEstimado}s
+- *Valor Total:* R$ ${orderData.totalAmount.toFixed(2)}
+
+*Texto para Gravação:*
+${orderData.texto}
+
+*Instruções Adicionais:*
+${orderData.instrucoes || 'Nenhuma'}
+
+*Música de Referência (YouTube):*
+${orderData.musicaYoutube || 'Nenhuma'}
+      `.trim();
+
+      const whatsappUrl = `https://wa.me/5591993584049?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+      
     } catch (error) {
-      console.error("Erro ao processar o pedido:", error);
-      alert('Não foi possível criar seu pedido. Tente novamente.');
+      console.error('Erro ao processar o pedido:', error);
+      alert('Não foi possível criar seu pedido.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isOrderReady = valorTotal > 0 && locutorSelecionado && textoCompleto.trim() !== '' && estiloGravacao && estiloLocucao && tipoGravacao;
+  const isOrderReady =
+    valorTotal > 0 &&
+    locutorSelecionado &&
+    textoCompleto.trim() !== '' &&
+    estiloGravacao &&
+    estiloLocucao &&
+    tipoGravacao;
 
   return (
     <div className="bg-[#F5F5F5] text-gray-800 min-h-screen">
       <div className="container mx-auto p-4 md:p-8">
-        
+
         <header className="text-center my-8 md:my-12">
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[#1E3A8A]">
             Neyzinho das Produções
@@ -214,44 +229,73 @@ export default function Home() {
         </header>
 
         <main className="space-y-16">
-        
+
+          {/* LOCUTORES */}
           <section id="locutores-secao">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">1. Escolha um Locutor</h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {locutores.map((locutor) => (
-                <Card key={locutor.id} className={`bg-white border-border shadow-lg rounded-xl overflow-hidden transition-all duration-300 ${locutorSelecionado?.id === locutor.id ? 'border-orange-500 ring-2 ring-orange-500' : 'hover:shadow-xl'}`}>
+                <Card
+                  key={locutor.id}
+                  className={`bg-white border-border shadow-lg rounded-xl overflow-hidden transition-all duration-300 ${
+                    locutorSelecionado?.id === locutor.id
+                      ? 'border-orange-500 ring-2 ring-orange-500'
+                      : 'hover:shadow-xl'
+                  }`}
+                >
                   <CardHeader>
                     <CardTitle className="text-xl text-[#1E3A8A]">{locutor.nome}</CardTitle>
                   </CardHeader>
+
                   <CardContent className="space-y-4">
                     <div className="flex flex-col sm:flex-row gap-2">
-                       <div className="flex-1 flex gap-2">
-                         <Button onClick={() => handlePlay(locutor.demoUrl)} variant="outline" className="flex-1 border-primary text-primary">
-                           <PlayCircle className="mr-2 h-4 w-4" /> 
-                           Play
-                         </Button>
-                         <Button onClick={handleStop} variant="destructive" className="flex-1">
-                           <StopCircle className="mr-2 h-4 w-4" /> 
-                           Stop
-                         </Button>
-                       </div>
+                      <div className="flex-1 flex gap-2">
+                        <Button
+                          onClick={() => handlePlay(locutor.demoUrl)}
+                          variant="outline"
+                          className="flex-1 border-primary text-primary"
+                        >
+                          <PlayCircle className="mr-2 h-4 w-4" /> Play
+                        </Button>
+                        <Button
+                          onClick={handleStop}
+                          variant="destructive"
+                          className="flex-1"
+                        >
+                          <StopCircle className="mr-2 h-4 w-4" /> Stop
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
+
                   <CardFooter>
-                     <Button onClick={() => handleSelecionar(locutor)} className="w-full bg-[#EA580C] hover:bg-orange-600 text-white font-bold">
-                        Selecionar {locutor.nome.split(' ')[0]}
-                      </Button>
+                    <Button
+                      onClick={() => handleSelecionar(locutor)}
+                      className="w-full bg-[#EA580C] hover:bg-orange-600 text-white font-bold"
+                    >
+                      Selecionar {locutor.nome.split(' ')[0]}
+                    </Button>
                   </CardFooter>
                 </Card>
               ))}
             </div>
           </section>
 
+          {/* DETALHES */}
           <section id="detalhes-secao">
-            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">2. Detalhes da Gravação</h2>
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">
+              2. Detalhes da Gravação
+            </h2>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+              {/* Estilo */}
               <Card className="bg-white border-border shadow-lg rounded-xl">
-                <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Estilo de Gravação</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-lg text-[#1E3A8A]">Estilo de Gravação</CardTitle>
+                </CardHeader>
+
                 <CardContent>
                   <RadioGroup value={estiloGravacao} onValueChange={setEstiloGravacao} className="space-y-2">
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Gravação Comercial" id="rg-comercial" /><Label htmlFor="rg-comercial">Comercial</Label></div>
@@ -262,8 +306,12 @@ export default function Home() {
                 </CardContent>
               </Card>
 
+              {/* Locução */}
               <Card className="bg-white border-border shadow-lg rounded-xl">
-                <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Estilo de Locução</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-lg text-[#1E3A8A]">Estilo de Locução</CardTitle>
+                </CardHeader>
+
                 <CardContent>
                   <RadioGroup value={estiloLocucao} onValueChange={setEstiloLocucao} className="space-y-2">
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Padrão" id="rl-padrao" /><Label htmlFor="rl-padrao">Padrão</Label></div>
@@ -274,14 +322,25 @@ export default function Home() {
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Caricata" id="rl-caricata" /><Label htmlFor="rl-caricata">Caricata</Label></div>
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Outros" id="rl-outros" /><Label htmlFor="rl-outros">Outros</Label></div>
                   </RadioGroup>
+
                   {estiloLocucao === 'Outros' && (
-                    <Input type="text" placeholder="Descreva o estilo" value={estiloLocucaoOutro} onChange={(e) => setEstiloLocucaoOutro(e.target.value)} className="mt-4"/>
+                    <Input
+                      type="text"
+                      placeholder="Descreva o estilo"
+                      value={estiloLocucaoOutro}
+                      onChange={(e) => setEstiloLocucaoOutro(e.target.value)}
+                      className="mt-4"
+                    />
                   )}
                 </CardContent>
               </Card>
 
+              {/* Tipo */}
               <Card className="bg-white border-border shadow-lg rounded-xl">
-                <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Tipo da Gravação</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-lg text-[#1E3A8A]">Tipo da Gravação</CardTitle>
+                </CardHeader>
+
                 <CardContent>
                   <RadioGroup value={tipoGravacao} onValueChange={setTipoGravacao} className="space-y-2">
                     <div className="flex items-center space-x-2"><RadioGroupItem value="Off (somente voz)" id="tipo-off" /><Label htmlFor="tipo-off">Off (somente voz)</Label></div>
@@ -289,136 +348,168 @@ export default function Home() {
                   </RadioGroup>
                 </CardContent>
               </Card>
+
             </div>
           </section>
 
+          {/* TEXTO */}
           <section id="texto-cliente-secao">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">3. Insira seu Texto</h2>
-             <Card className="bg-white border-border shadow-lg rounded-xl p-6">
-                {estiloGravacao === 'Vinheta' ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor='vinheta1' className="text-lg font-semibold mb-2 block text-gray-700">Vinheta 1</Label>
-                      <Input id="vinheta1" placeholder="Digite o texto para a vinheta 1" value={vinheta1} onChange={(e) => setVinheta1(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label htmlFor='vinheta2' className="text-lg font-semibold mb-2 block text-gray-700">Vinheta 2</Label>
-                      <Input id="vinheta2" placeholder="Digite o texto para a vinheta 2" value={vinheta2} onChange={(e) => setVinheta2(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label htmlFor='vinheta3' className="text-lg font-semibold mb-2 block text-gray-700">Vinheta 3</Label>
-                      <Input id="vinheta3" placeholder="Digite o texto para a vinheta 3" value={vinheta3} onChange={(e) => setVinheta3(e.target.value)} />
-                    </div>
-                  </div>
-                ) : (
+
+            <Card className="bg-white border-border shadow-lg rounded-xl p-6">
+
+              {estiloGravacao === 'Vinheta' ? (
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor='texto-principal' className="text-lg font-semibold mb-2 block text-gray-700">Texto para Gravação</Label>
-                    <Textarea
-                      id="texto-principal"
-                      className="w-full min-h-[200px]"
-                      placeholder="Digite ou cole aqui o roteiro da sua locução..."
-                      value={textoCliente}
-                      onChange={(e) => setTextoCliente(e.target.value)}
-                    />
+                    <Label className="mb-2 block text-gray-700">Vinheta 1</Label>
+                    <Input placeholder="Digite..." value={vinheta1} onChange={(e) => setVinheta1(e.target.value)} />
                   </div>
-                )}
-                <div className="text-center mt-4 text-lg text-gray-700">
-                  <span className="font-semibold">Tempo estimado:</span> {tempoEstimado} segundos
+                  <div>
+                    <Label className="mb-2 block text-gray-700">Vinheta 2</Label>
+                    <Input placeholder="Digite..." value={vinheta2} onChange={(e) => setVinheta2(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-gray-700">Vinheta 3</Label>
+                    <Input placeholder="Digite..." value={vinheta3} onChange={(e) => setVinheta3(e.target.value)} />
+                  </div>
                 </div>
+              ) : (
+                <div>
+                  <Label className="mb-2 block text-gray-700">Texto para Gravação</Label>
+                  <Textarea
+                    className="w-full min-h-[200px]"
+                    placeholder="Digite ou cole aqui..."
+                    value={textoCliente}
+                    onChange={(e) => setTextoCliente(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="text-center mt-4 text-lg text-gray-700">
+                <span className="font-semibold">Tempo estimado:</span> {tempoEstimado} segundos
+              </div>
+
             </Card>
           </section>
-          
+
+          {/* INSTRUÇÕES */}
           <section>
-             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">4. Instruções e Referências</h2>
-             <div className="space-y-8">
+            <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">4. Instruções e Referências</h2>
+
+            <div className="space-y-8">
+
+              <Card className="bg-white border-border shadow-lg rounded-xl">
+                <CardHeader><CardTitle>Instruções de Locução</CardTitle></CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Descreva ritmo, energia, referências..."
+                    className="w-full min-h-[150px]"
+                    value={instrucoesLocucao}
+                    onChange={(e) => setInstrucoesLocucao(e.target.value)}
+                  />
+                </CardContent>
+              </Card>
+
+              {tipoGravacao === 'Produzida (voz + trilha + efeitos)' && (
                 <Card className="bg-white border-border shadow-lg rounded-xl">
-                  <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Instruções de Locução</CardTitle></CardHeader>
+                  <CardHeader><CardTitle>Música do YouTube</CardTitle></CardHeader>
+
                   <CardContent>
-                    <Textarea 
-                      placeholder="Descreva o ritmo, velocidade, energia, referências e outros detalhes importantes."
-                      className="w-full min-h-[150px]"
-                      value={instrucoesLocucao}
-                      onChange={(e) => setInstrucoesLocucao(e.target.value)}
+                    <Label className="text-sm text-gray-500 mb-2 block">
+                      Cole o link do YouTube ou o nome da música.
+                    </Label>
+
+                    <Input
+                      placeholder="https://youtube.com/... ou Nome da música"
+                      value={musicaYoutube}
+                      onChange={(e) => setMusicaYoutube(e.target.value)}
                     />
                   </CardContent>
                 </Card>
+              )}
 
-                {tipoGravacao === 'Produzida (voz + trilha + efeitos)' && (
-                  <Card className="bg-white border-border shadow-lg rounded-xl">
-                    <CardHeader><CardTitle className="text-lg text-[#1E3A8A]">Link da Música (YouTube)</CardTitle></CardHeader>
-                    <CardContent>
-                        <Label htmlFor='musica-youtube' className="text-sm text-gray-500 mb-2 block">
-                            Cole aqui o link da música do YouTube ou escreva o nome da música que deseja usar na produção.
-                        </Label>
-                        <Input
-                            id="musica-youtube"
-                            placeholder="Ex: https://www.youtube.com/watch?v=... ou 'Nome da Música - Artista'"
-                            value={musicaYoutube}
-                            onChange={(e) => setMusicaYoutube(e.target.value)}
-                        />
-                    </CardContent>
-                  </Card>
-                )}
-             </div>
+            </div>
+
           </section>
 
+          {/* PAGAMENTO */}
           <section id="pagamento-secao">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">5. Orçamento e Envio</h2>
+
             <Card className="bg-white border-border shadow-xl rounded-xl text-center max-w-2xl mx-auto">
+
               <CardHeader>
                 <CardTitle className="text-2xl text-[#1E3A8A]">Orçamento Final</CardTitle>
               </CardHeader>
+
               <CardContent className="text-gray-700 space-y-2">
                 <p className="text-5xl font-bold text-green-600">
                   {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
+
                 <p className="text-sm text-gray-500">
-                  {tipoGravacao ? tipoGravacao : 'Selecione o tipo de gravação para ver o preço'}
+                  {tipoGravacao || 'Selecione o tipo para ver o preço'}
                 </p>
               </CardContent>
+
               <CardFooter className="flex-col gap-4 p-6">
-                <Button 
-                  size="lg" 
-                  onClick={handleSendOrder} 
-                  className="w-full bg-[#EA580C] hover:bg-orange-600 text-white text-lg px-8 py-6" 
+
+                <Button
+                  size="lg"
+                  onClick={handleSendOrder}
+                  className="w-full bg-[#EA580C] hover:bg-orange-600 text-white text-lg px-8 py-6"
                   disabled={isUserLoading || !isOrderReady || isSubmitting}
                 >
                   {isSubmitting ? (
-                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...</>
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...
+                    </>
                   ) : (
-                    <><Send className="mr-3 h-5 w-5" /> Fazer Pedido e Pagar</>
+                    <>
+                      <Send className="mr-3 h-5 w-5" /> Fazer Pedido e Pagar
+                    </>
                   )}
                 </Button>
-                 <p className="text-xs text-gray-400">Você será redirecionado para a página de pagamento.</p>
+
+                <p className="text-xs text-gray-400">Você será redirecionado para o pagamento.</p>
+
               </CardFooter>
+
             </Card>
           </section>
 
+          {/* TABELA DE PREÇOS */}
           <section id="tabela-precos-secao" className="mt-12">
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">Tabela de Preços</h2>
+
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+
               <Card className="bg-white border-border shadow-lg rounded-xl text-center">
                 <CardHeader>
                   <CardTitle className="text-xl text-[#1E3A8A]">Locução OFF</CardTitle>
                   <p className="text-sm text-gray-500">(somente a voz)</p>
                 </CardHeader>
+
                 <CardContent>
                   <p className="text-3xl font-bold text-green-600">R$ 7,00</p>
-                  <p className="text-sm text-gray-500">para textos de até 40 segundos.</p>
-                  <p className="text-xs text-gray-400 mt-1">+ R$0,20 por segundo adicional</p>
+                  <p className="text-sm text-gray-500">para textos até 40s</p>
+                  <p className="text-xs text-gray-400 mt-1">+ R$0,20 por segundo extra</p>
                 </CardContent>
               </Card>
+
               <Card className="bg-white border-border shadow-lg rounded-xl text-center">
                 <CardHeader>
                   <CardTitle className="text-xl text-[#1E3A8A]">Locução Produzida</CardTitle>
                   <p className="text-sm text-gray-500">(voz + trilha + efeitos)</p>
                 </CardHeader>
+
                 <CardContent>
                   <p className="text-3xl font-bold text-green-600">R$ 15,00</p>
-                  <p className="text-sm text-gray-500">para textos de até 40 segundos.</p>
-                   <p className="text-xs text-gray-400 mt-1">+ R$0,35 por segundo adicional</p>
+                  <p className="text-sm text-gray-500">até 40 segundos</p>
+                  <p className="text-xs text-gray-400 mt-1">+ R$0,35 por segundo adicional</p>
                 </CardContent>
               </card>
+
             </div>
           </section>
 
@@ -427,10 +518,14 @@ export default function Home() {
         <footer className="text-center mt-16 py-8 border-t border-border">
           <p className="font-bold text-lg text-[#1E3A8A]">Neyzinho das Produções</p>
           <p className="text-sm text-gray-500">Qualidade e rapidez para sua locução profissional.</p>
+
           <div className="flex justify-center gap-4 mt-4">
-             <Link href="/historico" className="text-blue-700 hover:text-orange-500">Meus Pedidos</Link>
+            <Link href="/historico" className="text-blue-700 hover:text-orange-500">
+              Meus Pedidos
+            </Link>
           </div>
         </footer>
+
       </div>
     </div>
   );
