@@ -205,11 +205,12 @@ ${musicaYoutube || 'Nenhuma'}
 
         <section id="video-tutorial" className="mb-16">
           <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">Veja como é fácil fazer seu pedido</h2>
-          <div className="aspect-video bg-gray-300/80 rounded-xl shadow-lg flex items-center justify-center max-w-4xl mx-auto">
-            <div className="text-center text-gray-600">
-                <PlayCircle size={80} className="mx-auto opacity-50" />
-                <p className="mt-2 font-semibold">Vídeo Tutorial Em Breve</p>
-            </div>
+          <div className="aspect-video bg-gray-200 rounded-xl shadow-lg max-w-4xl mx-auto overflow-hidden">
+             <video 
+                src="https://firebasestorage.googleapis.com/v0/b/studio-611847233-7c1f1.firebasestorage.app/o/2025-12-10%2023-43-00.mp4?alt=media&token=cc55ec28-4c4e-43ef-9e24-9deb928b371d" 
+                controls 
+                className="w-full h-full"
+             />
           </div>
         </section>
 
