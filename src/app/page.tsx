@@ -169,17 +169,15 @@ ${instrucoesLocucao || 'Nenhuma'}
 ${musicaYoutube || 'Nenhuma'}
         `;
 
-        const numeroWhatsapp = '5591992584049'; // Número corrigido
+        const numeroWhatsapp = '5591993584049';
         const urlWhatsapp = `https://wa.me/${numeroWhatsapp}?text=${encodeURIComponent(mensagem.trim())}`;
         
-        // Abre o link em uma nova aba para maior compatibilidade
         window.open(urlWhatsapp, '_blank');
 
     } catch (error) {
         console.error("Erro ao gerar link do WhatsApp:", error);
         alert('Não foi possível gerar o link para o WhatsApp. Tente novamente.');
     } finally {
-        // Resetamos o estado mesmo que o usuário não seja redirecionado
         setIsSubmitting(false);
     }
   };
