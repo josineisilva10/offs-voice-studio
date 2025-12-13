@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -199,7 +200,7 @@ ${musicaYoutube || 'Nenhuma'}
     }
   };
 
-  const isOrderReady =
+  const isOrderReady = 
     valorTotal > 0 &&
     locutorSelecionado &&
     textoCompleto.trim() !== '' &&
