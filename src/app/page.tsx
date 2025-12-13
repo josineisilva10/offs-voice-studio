@@ -12,55 +12,57 @@ import { useFirebase, useUser, initiateAnonymousSignIn } from '@/firebase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-// Dados dos locutores
+// Dados dos locutores com seus respectivos estilos
 const locutores = [
-  { id: 1, nome: 'Silvia Fogaça', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1499&v=1' },
-  { id: 2, nome: 'Charles Helfer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1875&v=1' },
-  { id: 3, nome: 'Denilson Soares', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3199&v=1' },
-  { id: 4, nome: 'Rogerio Britto', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=360&v=1' },
-  { id: 5, nome: 'Jorge', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1948&v=1' },
-  { id: 6, nome: 'Andre William', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=87&v=1' },
-  { id: 7, nome: 'Jana Hanauer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5793&v=1' },
-  { id: 8, nome: 'Sara Luiza', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5720&v=1' },
-  { id: 9, nome: 'JC', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=680&v=1' },
-  { id: 10, nome: 'Pablo Siqueira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3358&v=1' },
-  { id: 11, nome: 'Patricia Trezzi', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5061&v=1' },
-  { id: 12, nome: 'Patricia Vieira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1714&v=1' },
-  { id: 13, nome: 'Donato De Paula', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5257&v=1' },
-  { id: 14, nome: 'Jonas Moreira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2420&v=1' },
-  { id: 15, nome: 'Elissandra Lima', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=570&v=1' },
-  { id: 16, nome: 'Lula Muniz', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=222&v=1' },
-  { id: 17, nome: 'Antonio Manoel', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=176&v=1' },
-  { id: 18, nome: 'Anderson Henrique', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=183&v=1' },
-  { id: 19, nome: 'Robson Ferreira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=4568&v=1' },
-  { id: 20, nome: 'Silva Jr', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=4223&v=1' },
-  { id: 21, nome: 'Leandro Cruz', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=641&v=1' },
-  { id: 22, nome: 'Duda Celino', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5738&v=1' },
-  { id: 23, nome: 'Marcos Vinicius', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3042&v=1' },
-  { id: 24, nome: 'Leo Menezes', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=6193&v=1' },
-  { id: 25, nome: 'Andre Gonzaga', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1183&v=1' },
-  { id: 26, nome: 'Wisley', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=4982&v=1' },
-  { id: 27, nome: 'Sunshine', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=64&v=1' },
-  { id: 28, nome: 'Tito Maciel', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1125&v=1' },
-  { id: 29, nome: 'Frank Barone', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=6185&v=1' },
-  { id: 30, nome: 'Camargo Varejao', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5702&v=1' },
-  { id: 31, nome: 'Diane', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=338&v=1' },
-  { id: 32, nome: 'Hellen Reis', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5017&v=1' },
-  { id: 33, nome: 'Josimai', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5758&v=1' },
-  { id: 34, nome: 'Priscila Santos', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5159&v=1' },
-  { id: 35, nome: 'Fernanda Petter', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1899&v=1' },
-  { id: 36, nome: 'Bruninho Vox', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1&v=1' },
-  { id: 37, nome: 'Washington Luis', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5864&v=1' },
-  { id: 38, nome: 'Maximo', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1307&v=1' },
-  { id: 39, nome: 'Emerson Costa', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3423&v=1' },
-  { id: 40, nome: 'Lindy', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=698&v=1' },
-  { id: 41, nome: 'Alan Leandro', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=488&v=1' },
-  { id: 42, nome: 'Brandão', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1387&v=1' },
-  { id: 43, nome: 'Bobby', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5841&v=1' },
-  { id: 44, nome: 'Absamira Santos', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2052&v=1' },
-  { id: 45, nome: 'Kavanhac', demoUrl: 'https://hd.paineldegravacao.com.br/demos/0713316001537166059.mp3' },
-  { id: 46, nome: 'Rafael Monson', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=456&v=1' },
+  { id: 1, nome: 'Silvia Fogaça', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1499&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 2, nome: 'Charles Helfer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1875&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 3, nome: 'Denilson Soares', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3199&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 4, nome: 'Rogerio Britto', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=360&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 5, nome: 'Jorge', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1948&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 6, nome: 'Andre William', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=87&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 7, nome: 'Jana Hanauer', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5793&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 8, nome: 'Sara Luiza', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5720&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 9, nome: 'JC', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=680&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 10, nome: 'Pablo Siqueira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3358&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 11, nome: 'Patricia Trezzi', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5061&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 12, nome: 'Patricia Vieira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1714&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 13, nome: 'Donato De Paula', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5257&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 14, nome: 'Jonas Moreira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2420&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 15, nome: 'Elissandra Lima', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=570&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 16, nome: 'Lula Muniz', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=222&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 17, nome: 'Antonio Manoel', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=176&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 18, nome: 'Anderson Henrique', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=183&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 19, nome: 'Robson Ferreira', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=4568&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 20, nome: 'Silva Jr', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=4223&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 21, nome: 'Leandro Cruz', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=641&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 22, nome: 'Duda Celino', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5738&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 23, nome: 'Marcos Vinicius', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3042&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 24, nome: 'Leo Menezes', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=6193&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 25, nome: 'Andre Gonzaga', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1183&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 26, nome: 'Wisley', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=4982&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 27, nome: 'Sunshine', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=64&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 28, nome: 'Tito Maciel', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1125&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 29, nome: 'Frank Barone', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=6185&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 30, nome: 'Camargo Varejao', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5702&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 31, nome: 'Diane', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=338&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 32, nome: 'Hellen Reis', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5017&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 33, nome: 'Josimai', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5758&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 34, nome: 'Priscila Santos', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5159&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 35, nome: 'Fernanda Petter', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1899&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 36, nome: 'Bruninho Vox', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 37, nome: 'Washington Luis', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5864&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 38, nome: 'Maximo', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1307&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 39, nome: 'Emerson Costa', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=3423&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 40, nome: 'Lindy', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=698&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 41, nome: 'Alan Leandro', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=488&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 42, nome: 'Brandão', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=1387&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 43, nome: 'Bobby', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=5841&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 44, nome: 'Absamira Santos', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=2052&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 45, nome: 'Kavanhac', demoUrl: 'https://hd.paineldegravacao.com.br/demos/0713316001537166059.mp3', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
+  { id: 46, nome: 'Rafael Monson', demoUrl: 'https://vozlocutor.com.br/download-audio.php?id=456&v=1', estilos: ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'] },
 ];
+
+const todosOsEstilos = ['Padrão', 'Impacto', 'Animado', 'Varejo', 'Jovem', 'Caricata', 'Outros'];
 
 export default function Home() {
   const router = useRouter();
@@ -85,6 +87,13 @@ export default function Home() {
 
   const { auth } = useFirebase();
   const { user, isUserLoading } = useUser();
+
+  const estilosDeLocucaoDisponiveis = useMemo(() => {
+    if (locutorSelecionado && locutorSelecionado.estilos) {
+      return locutorSelecionado.estilos;
+    }
+    return todosOsEstilos;
+  }, [locutorSelecionado]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -136,6 +145,9 @@ export default function Home() {
 
   const handleSelecionar = (locutor: any) => {
     setLocutorSelecionado(locutor);
+    // Limpa o estilo de locução anterior para forçar uma nova seleção
+    setEstiloLocucao('');
+    setEstiloLocucaoOutro('');
     document.getElementById('detalhes-secao')?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -238,14 +250,14 @@ ${musicaYoutube || 'Nenhuma'}
                     <div className="flex flex-col sm:flex-row gap-2">
                       <div className="flex-1 flex gap-2">
                         <Button
-                          onClick={() => handlePlay(locutor.demoUrl)}
+                          onClick={(e) => { e.stopPropagation(); handlePlay(locutor.demoUrl); }}
                           variant="outline"
                           className="flex-1 border-primary text-primary"
                         >
                           <PlayCircle className="mr-2 h-4 w-4" /> Play
                         </Button>
                         <Button
-                          onClick={handleStop}
+                          onClick={(e) => { e.stopPropagation(); handleStop(); }}
                           variant="destructive"
                           className="flex-1"
                         >
@@ -300,13 +312,12 @@ ${musicaYoutube || 'Nenhuma'}
 
                 <CardContent>
                   <RadioGroup value={estiloLocucao} onValueChange={setEstiloLocucao} className="space-y-2">
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Padrão" id="rl-padrao" /><Label htmlFor="rl-padrao">Padrão</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Impacto" id="rl-impacto" /><Label htmlFor="rl-impacto">Impacto</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Animado" id="rl-animado" /><Label htmlFor="rl-animado">Animado</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Varejo" id="rl-varejo" /><Label htmlFor="rl-varejo">Varejo</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Jovem" id="rl-jovem" /><Label htmlFor="rl-jovem">Jovem</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Caricata" id="rl-caricata" /><Label htmlFor="rl-caricata">Caricata</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Outros" id="rl-outros" /><Label htmlFor="rl-outros">Outros</Label></div>
+                    {estilosDeLocucaoDisponiveis.map((estilo) => (
+                       <div key={estilo} className="flex items-center space-x-2">
+                         <RadioGroupItem value={estilo} id={`rl-${estilo.toLowerCase().replace(' ', '-')}`} />
+                         <Label htmlFor={`rl-${estilo.toLowerCase().replace(' ', '-')}`}>{estilo}</Label>
+                       </div>
+                    ))}
                   </RadioGroup>
 
                   {estiloLocucao === 'Outros' && (
