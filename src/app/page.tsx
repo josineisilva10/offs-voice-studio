@@ -73,6 +73,7 @@ export default function Home() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const [tituloPedido, setTituloPedido] = useState('');
   const [estiloGravacao, setEstiloGravacao] = useState('');
   const [estiloLocucao, setEstiloLocucao] = useState('');
   const [estiloLocucaoOutro, setEstiloLocucaoOutro] = useState('');
@@ -166,6 +167,7 @@ export default function Home() {
         const mensagem = `
 *Novo Pedido de Locução*
 
+*Título do Pedido:* ${tituloPedido || 'Não definido'}
 *Locutor:* ${locutorSelecionado?.nome || 'Não selecionado'}
 *Estilo de Gravação:* ${estiloGravacao || 'Não definido'}
 *Estilo de Locução:* ${estiloLocucaoFinal || 'Não definido'}
@@ -295,67 +297,83 @@ ${musicaYoutube || 'Nenhuma'}
             <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">
               2. Detalhes da Gravação
             </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-              {/* Estilo */}
+            
+            <div className="space-y-8">
               <Card className="bg-white border-border shadow-lg rounded-xl">
-                <CardHeader>
-                  <CardTitle className="text-lg text-[#1E3A8A]">Estilo de Gravação</CardTitle>
-                </CardHeader>
-
-                <CardContent>
-                  <RadioGroup value={estiloGravacao} onValueChange={setEstiloGravacao} className="space-y-2">
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Gravação Comercial" id="rg-comercial" /><Label htmlFor="rg-comercial">Comercial</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Vinheta" id="rg-vinheta" /><Label htmlFor="rg-vinheta">Vinheta</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Chamada de Festa" id="rg-festa" /><Label htmlFor="rg-festa">Chamada de Festa</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Spot" id="rg-spot" /><Label htmlFor="rg-spot">Spot</Label></div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-
-              {/* Locução */}
-              <Card className="bg-white border-border shadow-lg rounded-xl">
-                <CardHeader>
-                  <CardTitle className="text-lg text-[#1E3A8A]">Estilo de Locução</CardTitle>
-                </CardHeader>
-
-                <CardContent>
-                  <RadioGroup value={estiloLocucao} onValueChange={setEstiloLocucao} className="space-y-2">
-                    {estilosDeLocucaoDisponiveis.map((estilo) => (
-                       <div key={estilo} className="flex items-center space-x-2">
-                         <RadioGroupItem value={estilo} id={`rl-${estilo.toLowerCase().replace(' ', '-')}`} />
-                         <Label htmlFor={`rl-${estilo.toLowerCase().replace(' ', '-')}`}>{estilo}</Label>
-                       </div>
-                    ))}
-                  </RadioGroup>
-
-                  {estiloLocucao === 'Outros' && (
+                  <CardHeader>
+                    <CardTitle className="text-lg text-[#1E3A8A]">Título do Pedido (Opcional)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
                     <Input
                       type="text"
-                      placeholder="Descreva o estilo"
-                      value={estiloLocucaoOutro}
-                      onChange={(e) => setEstiloLocucaoOutro(e.target.value)}
-                      className="mt-4"
+                      placeholder="Ex: Anúncio da Padaria Pão Quente"
+                      value={tituloPedido}
+                      onChange={(e) => setTituloPedido(e.target.value)}
                     />
-                  )}
-                </CardContent>
+                  </CardContent>
               </Card>
 
-              {/* Tipo */}
-              <Card className="bg-white border-border shadow-lg rounded-xl">
-                <CardHeader>
-                  <CardTitle className="text-lg text-[#1E3A8A]">Tipo da Gravação</CardTitle>
-                </CardHeader>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-                <CardContent>
-                  <RadioGroup value={tipoGravacao} onValueChange={setTipoGravacao} className="space-y-2">
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Off (somente voz)" id="tipo-off" /><Label htmlFor="tipo-off">Off (somente voz)</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Produzida (voz + trilha + efeitos)" id="tipo-produzida" /><Label htmlFor="tipo-produzida">Produzida (com trilha e efeitos)</Label></div>
-                  </RadioGroup>
-                </CardContent>
-              </Card>
+                {/* Estilo */}
+                <Card className="bg-white border-border shadow-lg rounded-xl">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-[#1E3A8A]">Estilo de Gravação</CardTitle>
+                  </CardHeader>
 
+                  <CardContent>
+                    <RadioGroup value={estiloGravacao} onValueChange={setEstiloGravacao} className="space-y-2">
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Gravação Comercial" id="rg-comercial" /><Label htmlFor="rg-comercial">Comercial</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Vinheta" id="rg-vinheta" /><Label htmlFor="rg-vinheta">Vinheta</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Chamada de Festa" id="rg-festa" /><Label htmlFor="rg-festa">Chamada de Festa</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Spot" id="rg-spot" /><Label htmlFor="rg-spot">Spot</Label></div>
+                    </RadioGroup>
+                  </CardContent>
+                </Card>
+
+                {/* Locução */}
+                <Card className="bg-white border-border shadow-lg rounded-xl">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-[#1E3A8A]">Estilo de Locução</CardTitle>
+                  </CardHeader>
+
+                  <CardContent>
+                    <RadioGroup value={estiloLocucao} onValueChange={setEstiloLocucao} className="space-y-2">
+                      {estilosDeLocucaoDisponiveis.map((estilo) => (
+                        <div key={estilo} className="flex items-center space-x-2">
+                          <RadioGroupItem value={estilo} id={`rl-${estilo.toLowerCase().replace(/[\s-]/g, '')}`} />
+                          <Label htmlFor={`rl-${estilo.toLowerCase().replace(/[\s-]/g, '')}`}>{estilo}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+
+                    {estiloLocucao === 'Outros' && (
+                      <Input
+                        type="text"
+                        placeholder="Descreva o estilo"
+                        value={estiloLocucaoOutro}
+                        onChange={(e) => setEstiloLocucaoOutro(e.target.value)}
+                        className="mt-4"
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Tipo */}
+                <Card className="bg-white border-border shadow-lg rounded-xl">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-[#1E3A8A]">Tipo da Gravação</CardTitle>
+                  </CardHeader>
+
+                  <CardContent>
+                    <RadioGroup value={tipoGravacao} onValueChange={setTipoGravacao} className="space-y-2">
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Off (somente voz)" id="tipo-off" /><Label htmlFor="tipo-off">Off (somente voz)</Label></div>
+                      <div className="flex items-center space-x-2"><RadioGroupItem value="Produzida (voz + trilha + efeitos)" id="tipo-produzida" /><Label htmlFor="tipo-produzida">Produzida (com trilha e efeitos)</Label></div>
+                    </RadioGroup>
+                  </CardContent>
+                </Card>
+
+              </div>
             </div>
           </section>
 
@@ -508,7 +526,7 @@ ${musicaYoutube || 'Nenhuma'}
                 <CardHeader>
                   <CardTitle className="text-xl text-[#1E3A8A]">Locução Produzida</CardTitle>
                   <p className="text-sm text-gray-500">(voz + trilha + efeitos)</p>
-                </CardHeader>
+                </Header>
 
                 <CardContent>
                   <p className="text-3xl font-bold text-green-600">R$ 15,00</p>
