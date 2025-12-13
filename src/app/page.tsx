@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -200,10 +199,11 @@ ${musicaYoutube || 'Nenhuma'}
     }
   };
 
-  const isOrderReady = 
+  const isOrderReady =
     valorTotal > 0 &&
     locutorSelecionado &&
     textoCompleto.trim() !== '' &&
+    tituloPedido.trim() !== '' &&
     estiloGravacao &&
     (estiloLocucao && (estiloLocucao !== 'Outros' || estiloLocucaoOutro.trim() !== '')) &&
     tipoGravacao;
@@ -302,7 +302,7 @@ ${musicaYoutube || 'Nenhuma'}
             <div className="space-y-8">
               <Card className="bg-white border-border shadow-lg rounded-xl">
                   <CardHeader>
-                    <CardTitle className="text-lg text-[#1E3A8A]">Título do Pedido (Opcional)</CardTitle>
+                    <CardTitle className="text-lg text-[#1E3A8A]">Título do Pedido</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Input
@@ -310,6 +310,7 @@ ${musicaYoutube || 'Nenhuma'}
                       placeholder="Ex: Anúncio da Padaria Pão Quente"
                       value={tituloPedido}
                       onChange={(e) => setTituloPedido(e.target.value)}
+                      required
                     />
                   </CardContent>
               </Card>
@@ -527,7 +528,7 @@ ${musicaYoutube || 'Nenhuma'}
                 <CardHeader>
                   <CardTitle className="text-xl text-[#1E3A8A]">Locução Produzida</CardTitle>
                   <p className="text-sm text-gray-500">(voz + trilha + efeitos)</p>
-                </Header>
+                </CardHeader>
 
                 <CardContent>
                   <p className="text-3xl font-bold text-green-600">R$ 15,00</p>
