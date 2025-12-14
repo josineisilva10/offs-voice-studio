@@ -84,6 +84,7 @@ export default function Home() {
   const [vinheta1, setVinheta1] = useState('');
   const [vinheta2, setVinheta2] = useState('');
   const [vinheta3, setVinheta3] = useState('');
+  const [vinheta4, setVinheta4] = useState('');
 
   const [valorTotal, setValorTotal] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,10 +108,10 @@ export default function Home() {
 
   const textoCompleto = useMemo(() => {
     if (estiloGravacao === 'Vinheta') {
-      return [vinheta1, vinheta2, vinheta3].filter(Boolean).join(' ');
+      return [vinheta1, vinheta2, vinheta3, vinheta4].filter(Boolean).join(' ');
     }
     return textoCliente;
-  }, [estiloGravacao, textoCliente, vinheta1, vinheta2, vinheta3]);
+  }, [estiloGravacao, textoCliente, vinheta1, vinheta2, vinheta3, vinheta4]);
 
   const tempoEstimado = useMemo(() => {
     if (!textoCompleto.trim()) return 0;
@@ -161,7 +162,7 @@ export default function Home() {
         const estiloLocucaoFinal = estiloLocucao === 'Outros' ? `Outros: ${estiloLocucaoOutro}` : estiloLocucao;
 
         const textoParaMensagem = estiloGravacao === 'Vinheta'
-            ? `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}`
+            ? `Vinheta 1: ${vinheta1}\nVinheta 2: ${vinheta2}\nVinheta 3: ${vinheta3}\nVinheta 4: ${vinheta4}`
             : textoCliente.trim();
         
         const mensagem = `
@@ -223,12 +224,45 @@ ${musicaYoutube || 'Nenhuma'}
 
         <section id="video-tutorial" className="mb-16">
           <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">Veja como é fácil fazer seu pedido</h2>
-          <div className="aspect-video bg-gray-200 rounded-xl shadow-lg max-w-4xl mx-auto overflow-hidden">
-             <video 
-                src="https://firebasestorage.googleapis.com/v0/b/studio-611847233-7c1f1.firebasestorage.app/o/2025-12-10%2023-43-00.mp4?alt=media&token=cc55ec28-4c4e-43ef-9e24-9deb928b371d" 
-                controls 
-                className="w-full h-full"
-             />
+          <div className="p-8 bg-white rounded-xl shadow-lg max-w-4xl mx-auto border border-blue-100">
+            <h3 className="text-2xl font-semibold text-[#1E3A8A] mb-6 text-center">Guia Rápido em 5 Passos</h3>
+            <ol className="space-y-6">
+              <li className="flex items-start">
+                <div className="flex-shrink-0 bg-orange-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold text-lg mr-4">1</div>
+                <div>
+                  <h4 className="font-bold text-lg text-gray-800">Escolha a Voz Perfeita</h4>
+                  <p className="text-gray-600">Navegue pela lista de locutores, ouça as demos e clique em "Selecionar" na voz que mais gostar.</p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0 bg-orange-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold text-lg mr-4">2</div>
+                <div>
+                  <h4 className="font-bold text-lg text-gray-800">Defina os Detalhes</h4>
+                  <p className="text-gray-600">Preencha o título do pedido e escolha os estilos de gravação, locução e o tipo de produção (Off ou Produzida).</p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0 bg-orange-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold text-lg mr-4">3</div>
+                <div>
+                  <h4 className="font-bold text-lg text-gray-800">Insira seu Texto</h4>
+                  <p className="text-gray-600">Digite ou cole o roteiro que será gravado. O tempo e o valor serão calculados na hora!</p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0 bg-orange-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold text-lg mr-4">4</div>
+                <div>
+                  <h4 className="font-bold text-lg text-gray-800">Adicione Instruções</h4>
+                  <p className="text-gray-600">Dê detalhes sobre o ritmo, a energia ou cole um link de música do YouTube como referência de trilha sonora.</p>
+                </div>
+              </li>
+              <li className="flex items-start">
+                <div className="flex-shrink-0 bg-orange-500 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold text-lg mr-4">5</div>
+                <div>
+                  <h4 className="font-bold text-lg text-gray-800">Confira e Envie</h4>
+                  <p className="text-gray-600">Revise o orçamento final e clique em "Enviar Pedido via WhatsApp" para finalizar.</p>
+                </div>
+              </li>
+            </ol>
           </div>
         </section>
 
@@ -398,6 +432,10 @@ ${musicaYoutube || 'Nenhuma'}
                   <div>
                     <Label className="mb-2 block text-gray-700">Vinheta 3</Label>
                     <Input placeholder="Digite..." value={vinheta3} onChange={(e) => setVinheta3(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-gray-700">Vinheta 4</Label>
+                    <Input placeholder="Digite..." value={vinheta4} onChange={(e) => setVinheta4(e.target.value)} />
                   </div>
                 </div>
               ) : (
