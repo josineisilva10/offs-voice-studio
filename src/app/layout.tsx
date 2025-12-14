@@ -18,6 +18,9 @@ const ptSans = PT_Sans({
 export const metadata: Metadata = {
   title: "Neyzinho das Produções",
   description: "Gere locuções profissionais.",
+  icons: {
+    icon: 'https://firebasestorage.googleapis.com/v0/b/studio-611847233-7c1f1.firebasestorage.app/o/Gemini_Generated_Image_qsh9ukqsh9ukqsh9.png?alt=media&token=2053afc2-21dd-4804-afa5-87eb5daa995d',
+  },
 };
 
 export default function RootLayout({
