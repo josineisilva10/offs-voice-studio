@@ -224,6 +224,13 @@ ${musicaYoutube || 'Nenhuma'}
 
         <section id="video-tutorial" className="mb-16">
           <h2 className="text-3xl font-bold text-center mb-8 text-[#1E3A8A]">Veja como é fácil fazer seu pedido</h2>
+          <div className="aspect-video bg-gray-200 rounded-xl shadow-lg max-w-4xl mx-auto overflow-hidden mb-12">
+             <video 
+                src="https://firebasestorage.googleapis.com/v0/b/studio-611847233-7c1f1.firebasestorage.app/o/2025-12-10%2023-43-00.mp4?alt=media&token=cc55ec28-4c4e-43ef-9e24-9deb928b371d" 
+                controls 
+                className="w-full h-full"
+             />
+          </div>
           <div className="p-8 bg-white rounded-xl shadow-lg max-w-4xl mx-auto border border-blue-100">
             <h3 className="text-2xl font-semibold text-[#1E3A8A] mb-6 text-center">Guia Rápido em 5 Passos</h3>
             <ol className="space-y-6">
